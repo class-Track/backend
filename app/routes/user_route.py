@@ -29,7 +29,7 @@ def login_user():
     session = SManager.login(user.user_id)
     return make_response(jsonify(session), 200)  # Upon login we don't return user. We return a session
 
-@app_users_routes.route('/classTrack/login', methods=['POST'])
+@app_users_routes.route('/classTrack/logout', methods=['POST'])
 def logout_user():
     removed_session = SManager.logout(request.headers.get("SessionID"))
 
