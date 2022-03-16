@@ -9,7 +9,15 @@ app_curriculum_ratings_routes = Blueprint('curriculum_ratings_routes', __name__)
 # CREATE Degree
 @app_curriculum_ratings_routes.route('/classTrack/curriculum_rating', methods=['POST'])
 def create_curriculum_rating():
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
     data = request.get_json()
+
+    if s.user_id != data["user_id"]:
+        return make_response("Cannot make a rating for a user that you aren't!", 403)
+
     curriculum_rating_access = Curriculum_Ratings()
     curriculum_rating_id = curriculum_rating_access.create(
         data["user_id"], data["curriculum_id"], data["rating"])
@@ -37,7 +45,15 @@ def get_curriculum_rating(id):
 # UPDATE
 @app_curriculum_ratings_routes.route('/classTrack/curriculum_rating/update/<int:id>', methods=['PUT'])
 def update_curriculum_rating(id):
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
     data = request.get_json()
+
+    if s.user_id != data["user_id"]:
+        return make_response("Cannot update a rating for a user that you aren't!", 403)
+
     curriculum_rating_access = Curriculum_Ratings()
     if curriculum_rating_access.read(id) is None:
         curriculum_rating_access.close_connection()
@@ -50,10 +66,22 @@ def update_curriculum_rating(id):
 # DELETE
 @app_curriculum_ratings_routes.route('/classTrack/curriculum_rating/delete/<int:id>', methods=['POST'])
 def delete_curriculum_rating(id):
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
     curriculum_rating_access = Curriculum_Ratings()
-    if curriculum_rating_access.read(id) is None:
+
+    c = curriculum_rating_access.read(id)
+
+    if c is None:
         curriculum_rating_access.close_connection()
         return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
+
+    if c.user_id != s.user_id:
+        curriculum_rating_access.close_connection()
+        return make_response("Cannot delete a rating that you didn't make!", 401)
+
     deleted_curriculum_rating = curriculum_rating_access.delete(id)
     curriculum_rating_access.close_connection()
     return make_response(jsonify({"rating_id": deleted_curriculum_rating}), 200)
