@@ -10,7 +10,7 @@ def create_user():
     data = request.get_json()
     user_access = Users()
     user_id = user_access.create(
-        data["degree_id"], data["first_name"], data["last_name"], data["email"], data["password"])
+        data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
     user_access.close_connection()
     return make_response(jsonify(user_id), 200)
 
@@ -22,11 +22,21 @@ def get_all_users():
     user_access.close_connection()
     return make_response(jsonify(users), 200)
 
-# READ BY ID
-@app_users_routes.route('/classTrack/user/<int:id>', methods=['GET'])
-def get_user(id):
+# READ Student BY ID
+@app_users_routes.route('/classTrack/student/<int:id>', methods=['GET'])
+def get_student(id):
     user_access = Users()
-    user = user_access.read(id)
+    user = user_access.readStudent(id)
+    user_access.close_connection()
+    if user is None:
+        return make_response(jsonify({"err": "User not found"}), 404)
+    return make_response(jsonify(user), 200)
+
+# READ Admin BY ID
+@app_users_routes.route('/classTrack/admin/<int:id>', methods=['GET'])
+def get_admin(id):
+    user_access = Users()
+    user = user_access.readAdmin(id)
     user_access.close_connection()
     if user is None:
         return make_response(jsonify({"err": "User not found"}), 404)
@@ -37,11 +47,11 @@ def get_user(id):
 def update_user(id):
     data = request.get_json()
     user_access = Users()
-    if user_access.read(id) is None:
+    if user_access.readAdmin(id) is None and user_access.readStudent(id):
         user_access.close_connection()
         return make_response(jsonify({"err": "User not found"}), 404)
     updated_user = user_access.update(
-        id, data["degree_id"], data["first_name"], data["last_name"], data["email"], data["password"])
+        id, data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
     user_access.close_connection()
     return make_response(jsonify({"user_id": updated_user}), 200)
 
@@ -49,7 +59,7 @@ def update_user(id):
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
     user_access = Users()
-    if user_access.read(id) is None:
+    if user_access.readAdmin(id) is None and user_access.readStudent(id):
         user_access.close_connection()
         return make_response(jsonify({"err": "User not found"}), 404)
     deleted_user = user_access.delete(id)
