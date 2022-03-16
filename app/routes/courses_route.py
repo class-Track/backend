@@ -1,7 +1,9 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.courses import Courses
+from app.SessionManager import SessionManager
 
+SManager = SessionManager()
 app_course_routes = Blueprint('courses_routes', __name__)
 
 # CREATE Course

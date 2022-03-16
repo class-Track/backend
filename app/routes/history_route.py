@@ -1,7 +1,9 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.history import History
+from app.SessionManager import SessionManager
 
+SManager = SessionManager()
 app_history_routes = Blueprint('history_routes', __name__)
 
 # CREATE History

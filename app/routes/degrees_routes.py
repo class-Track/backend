@@ -1,7 +1,9 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.degrees import Degrees
+from app.SessionManager import SessionManager
 
+SManager = SessionManager()
 app_degrees_routes = Blueprint('degrees_routes', __name__)
 
 # CREATE Degree
