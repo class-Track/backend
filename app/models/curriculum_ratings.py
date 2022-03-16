@@ -5,16 +5,7 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-# CREATE TABLE degrees (
-# 	degree_id SERIAL PRIMARY KEY NOT NULL,
-# 	department_id INT REFERENCES departments(department_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-# 	curriculum_sequence VARCHAR(100), -- this is a FK to the non relational DB
-# 	length SMALLINT NOT NULL,
-# 	credits SMALLINT NOT NULL
-# );
-
-
-class Curriculum_Rating:
+class Curriculum_Ratings:
     def __init__(self):
         self.connection = psycopg2.connect(
             host='ec2-34-231-183-74.compute-1.amazonaws.com',
