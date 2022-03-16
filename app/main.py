@@ -9,6 +9,7 @@ from app.routes.curriculum_ratings_routes import app_curriculum_ratings_routes
 from app.routes.departments_route import app_departments_routes
 from app.routes.user_route import app_users_routes
 from app.routes.history_route import app_history_routes
+from app.routes.courses_route import app_course_routes
 
 app = Flask(__name__)
 
@@ -18,6 +19,8 @@ app.register_blueprint(app_curriculum_ratings_routes)
 app.register_blueprint(app_departments_routes)
 app.register_blueprint(app_users_routes)
 app.register_blueprint(app_history_routes)
+app.register_blueprint(app_course_routes)
+
 
 @app.route('/')
 def hello():

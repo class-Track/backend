@@ -10,7 +10,7 @@ def create_history():
     data = request.get_json()
     history_access = History()
     history_id = history_access.create(
-        data["name"], data["codification"], data["state"], data["country"])
+        data["user_id"], data["curriculum_id"])
     history_access.close_connection()
     return make_response(jsonify(history_id), 200)
 
@@ -41,7 +41,7 @@ def update_history(id):
         history_access.close_connection()
         return make_response(jsonify({"err": "History not found"}), 404)
     updated_history = history_access.update(
-        id, data["name"], data["codification"], data["state"], data["country"])
+        id, data["user_id"], data["curriculum_id"])
     history_access.close_connection()
     return make_response(jsonify({"history_id": updated_history}), 200)
 
