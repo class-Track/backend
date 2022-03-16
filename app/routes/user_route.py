@@ -29,6 +29,15 @@ def login_user():
     session = SManager.login(user.user_id)
     return make_response(jsonify(session), 200)  # Upon login we don't return user. We return a session
 
+@app_users_routes.route('/classTrack/login', methods=['POST'])
+def logout_user():
+    removed_session = SManager.logout(request.headers.get("SessionID"))
+
+    if removed_session is None:  # This is technically not necessary. I only add this check because I don't want to make
+        return make_response(jsonify({"err": "Session was not found"}, 404))  # Jsonify flip because it received None
+
+    return make_response(jsonify(removed_session), 200)
+
 # Get associated student/admin
 @app_users_routes.route('/classTrack/me', methods=['POST'])
 def get_me():
