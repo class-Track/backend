@@ -37,15 +37,21 @@ def get_university(id):
 def update_university(id):
     data = request.get_json()
     university_access = Universities()
+    if university_access.read(id) is None:
+        university_access.close_connection()
+        return make_response(jsonify({"err": "University not found"}), 404)
     updated_university = university_access.update(
         id, data["name"], data["codification"], data["state"], data["country"])
     university_access.close_connection()
-    return make_response(jsonify({"university_id": updated_university}), 200)
+    return make_response(jsonify({"university_id": updated_university}), 200)        
 
 # DELETE
 @app_universities_routes.route('/classTrack/university/delete/<int:id>', methods=['POST'])
 def delete_university(id):
     university_access = Universities()
+    if university_access.read(id) is None:
+        university_access.close_connection()
+        return make_response(jsonify({"err": "University not found"}), 404)
     deleted_university = university_access.delete(id)
     university_access.close_connection()
-    return make_response(jsonify({"university_id": deleted_university}), 200)
+    return make_response(jsonify({"university_id": deleted_university}), 200)        
