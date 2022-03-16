@@ -1,6 +1,6 @@
 import uuid
-
 import Session
+from app.models.users import Users
 
 
 class SessionManager:
@@ -34,6 +34,9 @@ class SessionManager:
 
     def find_session(self, session_id) -> Session:
         """Finds, extends, and returns a session with given ID. If the session is expired, it is removed."""
+        if session_id is None:
+            return None
+
         if session_id not in self.__sessions__.keys():
             return None  # If it doesn't exist, get the heck out
 
@@ -43,6 +46,21 @@ class SessionManager:
 
         self.__sessions__[session_id].extend_session()  # Extend the session
         return self.__sessions__[session_id]  # Return it and adios
+
+    def get_tied_user(self, session_id):
+        """Finds the session using find_session and then gets the associated tied user from the DB"""
+        s = self.find_session(session_id)
+
+        if s is None:
+            return None
+
+        # TODO HEY REMEMBER TO UPDATE THIS WHEN WE UPDATE THE MODELS
+        u = Users()
+        session_user = u.read(s.user_id())
+        u.close_connection()
+
+        return session_user
+
 
     def logout(self, session_id):
         """Removes a session with given ID. In essence, logs a user out."""
