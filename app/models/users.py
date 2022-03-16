@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
@@ -14,13 +15,13 @@ class Users:
             password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
         )
 
-    def create(self, isAdmin, variant_id, first_name, last_name, email, password):
+    def signUp(self, isAdmin, variant_id, first_name, last_name, email, password):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "INSERT INTO users (first_name, last_name, email, password)"
                 " VALUES ( %(first_name)s, %(last_name)s, %(email)s, %(password)s)"
                 " RETURNING user_id", {
-                    "first_name": first_name, "last_name": last_name, "email": email, "password": password }
+                    "first_name": first_name, "last_name": last_name, "email": email, "password": generate_password_hash(password, method='sha256') }
             )
             self.connection.commit()
             user_id = cursor.fetchone()
@@ -42,6 +43,22 @@ class Users:
             self.connection.commit()
 
             return user_id
+
+    def login(self, email, password):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "SELECT email, password FROM users WHERE email=%(email)s",
+                {"email":email})
+            self.connection.commit()
+            try:
+                user = cursor.fetchone()
+            except TypeError:
+                user = None
+            
+            if user and check_password_hash(user['password'], str(password)):
+                user = user['email']
+
+            return user
 
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:

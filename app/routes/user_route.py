@@ -6,15 +6,26 @@ from app.SessionManager import SessionManager
 SManager = SessionManager()
 app_users_routes = Blueprint('user_routes', __name__)
 
-# CREATE User
+# CREATE - User (SignUp)
 @app_users_routes.route('/classTrack/user', methods=['POST'])
 def create_user():
     data = request.get_json()
     user_access = Users()
-    user_id = user_access.create(
+    user_id = user_access.signUp(
         data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
     user_access.close_connection()
     return make_response(jsonify(user_id), 200)
+
+@app_users_routes.route('/classTrack/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    user_access = Users()
+    user = user_access.login(
+        data["email"], data["password"])
+    user_access.close_connection()
+    if user is None:
+        return make_response(jsonify({"err": "Email or Password not found"}), 404)
+    return make_response(jsonify(user), 200)
 
 # READ ALL
 @app_users_routes.route('/classTrack/users', methods=['GET'])
