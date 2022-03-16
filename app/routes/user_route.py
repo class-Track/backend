@@ -1,7 +1,9 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.users import Users
+from app.SessionManager import SessionManager
 
+SManager = SessionManager()
 app_users_routes = Blueprint('user_routes', __name__)
 
 # CREATE User
@@ -35,6 +37,14 @@ def get_user(id):
 # UPDATE
 @app_users_routes.route('/classTrack/user/update/<int:id>', methods=['PUT'])
 def update_user(id):
+
+    s = SManager.find_session(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
+    if s.user_id() != id:  # TODO: CHECK FOR USER ROLES
+        return make_response("Session is not tied to this user", 403)
+
     data = request.get_json()
     user_access = Users()
     if user_access.read(id) is None:
@@ -48,6 +58,13 @@ def update_user(id):
 # DELETE
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
+    s = SManager.find_session(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
+    if s.user_id() != id:  # TODO: CHECK FOR USER ROLES
+        return make_response("Session is not tied to this user", 403)
+
     user_access = Users()
     if user_access.read(id) is None:
         user_access.close_connection()
