@@ -5,7 +5,7 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-class Courses:
+class Curriculum_Ratings:
     def __init__(self):
         self.connection = psycopg2.connect(
             host='ec2-34-231-183-74.compute-1.amazonaws.com',
@@ -14,51 +14,51 @@ class Courses:
             password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
         )
 
-    def create(self, department_id, name, classification):
+    def create(self, user_id, curriculum_id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "INSERT INTO courses (department_id, name, classification)"
-                " VALUES ( %(department_id)s, %(name)s, %(classification)s)"
-                " RETURNING course_id", {
-                    "department_id": department_id, "name": name, "classification": classification}
+                "INSERT INTO curriculum_ratings (user_id, curriculum_id, rating)"
+                " VALUES ( %(user_id)s, %(curriculum_id)s, %(rating)s )"
+                " RETURNING rating_id", {
+                    "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating}
             )
             self.connection.commit()
-            course_id = cursor.fetchone()
-            return course_id
+            rating_id = cursor.fetchone()
+            return rating_id
 
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT department_id, name, classification FROM courses")
+                "SELECT user_id, curriculum_id, rating FROM curriculum_ratings")
             self.connection.commit()
-            courses = cursor.fetchall()
-            return courses
+            curriculum_ratings = cursor.fetchall()
+            return curriculum_ratings
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT course_id, department_id, name, classification FROM courses WHERE course_id=%(course_id)s",
-                           {"course_id": id})
+            cursor.execute("SELECT user_id, curriculum_id, rating FROM curriculum_ratings WHERE rating_id=%(rating_id)s",
+                           {"rating_id": id})
             self.connection.commit()
             try:
-                course = cursor.fetchone()
+                rating = cursor.fetchone()
             except TypeError:
-                course = None
-            return course
+                rating = None
+            return rating
 
-    def update(self, id, department_id, name, classification):
+    def update(self, id, user_id, curriculum_id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "UPDATE courses"
-                " SET department_id=%(department_id)s, name=%(name)s, classification=%(classification)s"
-                " WHERE course_id=%(course_id)s ",
-                {"course_id": id, "department_id": department_id, "name": name, "classification": classification})
+                "UPDATE curriculum_ratings"
+                " SET user_id=%(user_id)s, curriculum_id=%(curriculum_id)s, rating=%(rating)s"
+                " WHERE rating_id=%(rating_id)s ",
+                {"rating_id": id, "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating})
             self.connection.commit()
             return id
 
     def delete(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "DELETE FROM courses WHERE course_id=%(course_id)s", {"course_id": id})
+                "DELETE FROM curriculum_ratings WHERE rating_id=%(rating_id)s", {"rating_id": id})
             self.connection.commit()
             return id
 

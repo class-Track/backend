@@ -10,7 +10,7 @@ def create_course():
     data = request.get_json()
     course_access = Courses()
     course_id = course_access.create(
-        data["name"], data["codification"], data["state"], data["country"])
+        data["department_id"], data["name"], data["classification"])
     course_access.close_connection()
     return make_response(jsonify(course_id), 200)
 
@@ -37,8 +37,11 @@ def get_course(id):
 def update_course(id):
     data = request.get_json()
     course_access = Courses()
+    if course_access.read(id) is None:
+        course_access.close_connection()
+        return make_response(jsonify({"err": "Course not found"}), 404)
     updated_course = course_access.update(
-        id, data["name"], data["codification"], data["state"], data["country"])
+        id, data["department_id"], data["name"], data["classification"])
     course_access.close_connection()
     return make_response(jsonify({"course_id": updated_course}), 200)
 
@@ -46,6 +49,9 @@ def update_course(id):
 @app_course_routes.route('/classTrack/course/delete/<int:id>', methods=['POST'])
 def delete_course(id):
     course_access = Courses()
+    if course_access.read(id) is None:
+        course_access.close_connection()
+        return make_response(jsonify({"err": "Course not found"}), 404)
     deleted_course = course_access.delete(id)
     course_access.close_connection()
     return make_response(jsonify({"course_id": deleted_course}), 200)
