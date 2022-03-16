@@ -48,11 +48,11 @@ def get_admin(id):
 @app_users_routes.route('/classTrack/user/update/<int:id>', methods=['PUT'])
 def update_user(id):
 
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id() != id:  # TODO: CHECK FOR USER ROLES
+    if s.user_id() != id and not admin:
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     data = request.get_json()
@@ -68,11 +68,11 @@ def update_user(id):
 # DELETE
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id != id:  # TODO: CHECK FOR USER ROLES
+    if s.user_id != id and not admin:  # honestly I cannot believe this uses "and" and "not" instead of && and !
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     user_access = Users()

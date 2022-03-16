@@ -9,14 +9,18 @@ app_departments_routes = Blueprint('departments_routes', __name__)
 # CREATE Department
 @app_departments_routes.route('/classTrack/department', methods=['POST'])
 def create_department():
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
     data = request.get_json()
+
+    if not s.university_id == data["university_id"]:
+        return make_response(jsonify({"err": "User does not administrate this university"}), 403)
+
     department_access = Departments()
     department_id = department_access.create(
         data["university_id"], data["name"], data["classification"])
@@ -44,37 +48,49 @@ def get_department(id):
 # UPDATE
 @app_departments_routes.route('/classTrack/department/update/<int:id>', methods=['PUT'])
 def update_department(id):
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
     data = request.get_json()
+
+    if not s.university_id == data["university_id"]:
+        return make_response(jsonify({"err": "User does not administrate this university"}), 403)
+
     department_access = Departments()
     if department_access.read(id) is None:
         department_access.close_connection()
         return make_response(jsonify({"err": "Department not found"}), 404)
     updated_department = department_access.update(
-        id, data["university_id"], data["name"], data["classification"])
-    department_access.close_connection()
-    return make_response(jsonify({"department_id": updated_department}), 200)
+        id, data["university_id"], data["name"], data["classification"])  # Allowing users to change the university of
+    department_access.close_connection()                                  # a department can be detrimental, and pose
+    return make_response(jsonify({"department_id": updated_department}), 200)  # A light security risk!
 
 # DELETE
 @app_departments_routes.route('/classTrack/department/delete/<int:id>', methods=['POST'])
 def delete_department(id):
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an Admin, they are a Student"}), 403)
 
     department_access = Departments()
-    if department_access.read(id) is None:
+
+    d = department_access.read(id)
+
+    if d is None:
         department_access.close_connection()
         return make_response(jsonify({"err": "Department not found"}), 404)
+
+    if d.university_id != s.university_id:
+        department_access.close_connection()
+        return make_response(jsonify({"err": "User does not administrate this university"}), 404)
+
     deleted_department = department_access.delete(id)
     department_access.close_connection()
     return make_response(jsonify({"department_id": deleted_department}), 200)
