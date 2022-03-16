@@ -37,6 +37,9 @@ def get_curriculum_rating(id):
 def update_curriculum_rating(id):
     data = request.get_json()
     curriculum_rating_access = Curriculum_Ratings()
+    if curriculum_rating_access.read(id) is None:
+        curriculum_rating_access.close_connection()
+        return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
     updated_curriculum_rating = curriculum_rating_access.update(
         id, data["user_id"], data["curriculum_id"], data["rating"])
     curriculum_rating_access.close_connection()
@@ -46,6 +49,9 @@ def update_curriculum_rating(id):
 @app_curriculum_ratings_routes.route('/classTrack/curriculum_rating/delete/<int:id>', methods=['POST'])
 def delete_curriculum_rating(id):
     curriculum_rating_access = Curriculum_Ratings()
+    if curriculum_rating_access.read(id) is None:
+        curriculum_rating_access.close_connection()
+        return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
     deleted_curriculum_rating = curriculum_rating_access.delete(id)
     curriculum_rating_access.close_connection()
     return make_response(jsonify({"rating_id": deleted_curriculum_rating}), 200)

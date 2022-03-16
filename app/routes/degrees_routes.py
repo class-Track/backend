@@ -37,8 +37,11 @@ def get_degree(id):
 def update_degree(id):
     data = request.get_json()
     degree_access = Degrees()
+    if degree_access.read(id) is None:
+        degree_access.close_connection()
+        return make_response(jsonify({"err": "Degree not found"}), 404)
     updated_degree = degree_access.update(
-        id, data["name"], data["codification"], data["state"], data["\country"])
+        id, data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
     degree_access.close_connection()
     return make_response(jsonify({"degree_id": updated_degree}), 200)
 
@@ -46,6 +49,9 @@ def update_degree(id):
 @app_degrees_routes.route('/classTrack/degree/delete/<int:id>', methods=['POST'])
 def delete_degree(id):
     degree_access = Degrees()
+    if degree_access.read(id) is None:
+        degree_access.close_connection()
+        return make_response(jsonify({"err": "Degree not found"}), 404)
     deleted_degree = degree_access.delete(id)
     degree_access.close_connection()
     return make_response(jsonify({"degree_id": deleted_degree}), 200)

@@ -5,14 +5,6 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-# CREATE TABLE degrees (
-# 	degree_id SERIAL PRIMARY KEY NOT NULL,
-# 	department_id INT REFERENCES departments(department_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-# 	curriculum_sequence VARCHAR(100), -- this is a FK to the non relational DB
-# 	length SMALLINT NOT NULL,
-# 	credits SMALLINT NOT NULL
-# );
-
 class Degrees:
     def __init__(self):
         self.connection = psycopg2.connect(
@@ -48,10 +40,10 @@ class Degrees:
                            {"degree_id": id})
             self.connection.commit()
             try:
-                user = cursor.fetchone()
+                degree = cursor.fetchone()
             except TypeError:
-                user = None
-            return user
+                degree = None
+            return degree
 
     def update(self, id, department_id, curriculum_sequence, length, credits):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:

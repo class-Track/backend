@@ -5,7 +5,7 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-class Curriculum_Ratings:
+class History:
     def __init__(self):
         self.connection = psycopg2.connect(
             host='ec2-34-231-183-74.compute-1.amazonaws.com',
@@ -14,51 +14,51 @@ class Curriculum_Ratings:
             password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
         )
 
-    def create(self, user_id, curriculum_id, rating):
+    def create(self, user_id, curriculum_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "INSERT INTO curriculum_ratings (user_id, curriculum_id, rating)"
-                " VALUES ( %(user_id)s, %(curriculum_id)s, %(rating)s )"
-                " RETURNING rating_id", {
-                    "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating}
+                "INSERT INTO history (user_id, curriculum_id)"
+                " VALUES ( %(user_id)s, %(curriculum_id)s)"
+                " RETURNING history_id", {
+                    "user_id": user_id, "curriculum_id": curriculum_id}
             )
             self.connection.commit()
-            rating_id = cursor.fetchone()
-            return rating_id
+            history_id = cursor.fetchone()
+            return history_id
 
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT user_id, curriculum_id, rating FROM curriculum_ratings")
+                "SELECT user_id, curriculum_id FROM history")
             self.connection.commit()
-            curriculum_ratings = cursor.fetchall()
-            return curriculum_ratings
+            histories = cursor.fetchall()
+            return histories
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT user_id, curriculum_id, rating FROM curriculum_ratings WHERE rating_id=%(rating_id)s",
-                           {"rating_id": id})
+            cursor.execute("SELECT history_id, user_id, curriculum_id FROM history WHERE history_id=%(history_id)s",
+                           {"history_id": id})
             self.connection.commit()
             try:
-                rating = cursor.fetchone()
+                history = cursor.fetchone()
             except TypeError:
-                rating = None
-            return rating
+                history = None
+            return history
 
-    def update(self, id, user_id, curriculum_id, rating):
+    def update(self, id, user_id, curriculum_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "UPDATE curriculum_ratings"
-                " SET user_id=%(user_id)s, curriculum_id=%(curriculum_id)s, rating=%(rating)s"
-                " WHERE rating_id=%(rating_id)s ",
-                {"rating_id": id, "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating})
+                "UPDATE history"
+                " SET user_id=%(user_id)s, curriculum_id=%(curriculum_id)s"
+                " WHERE history_id=%(history_id)s ",
+                {"history_id": id, "user_id": user_id, "curriculum_id": curriculum_id})
             self.connection.commit()
             return id
 
     def delete(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "DELETE FROM curriculum_ratings WHERE rating_id=%(rating_id)s", {"rating_id": id})
+                "DELETE FROM history WHERE history_id=%(history_id)s", {"history_id": id})
             self.connection.commit()
             return id
 
