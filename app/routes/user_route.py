@@ -40,10 +40,10 @@ def update_user(id):
 
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if s.user_id() != id:  # TODO: CHECK FOR USER ROLES
-        return make_response("Session is not tied to this user", 403)
+        return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     data = request.get_json()
     user_access = Users()
@@ -60,10 +60,10 @@ def update_user(id):
 def delete_user(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if s.user_id != id:  # TODO: CHECK FOR USER ROLES
-        return make_response("Session is not tied to this user", 403)
+        return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     user_access = Users()
     if user_access.read(id) is None:

@@ -11,10 +11,10 @@ app_departments_routes = Blueprint('departments_routes', __name__)
 def create_department():
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     department_access = Departments()
@@ -46,10 +46,10 @@ def get_department(id):
 def update_department(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     department_access = Departments()
@@ -66,10 +66,10 @@ def update_department(id):
 def delete_department(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     department_access = Departments()
     if department_access.read(id) is None:
