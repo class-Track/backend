@@ -57,6 +57,8 @@ class Users:
             
             if user and check_password_hash(user['password'], str(password)):
                 user = user['email']
+            else:
+                user = None
 
             return user
 
