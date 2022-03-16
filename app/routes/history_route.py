@@ -11,12 +11,12 @@ app_history_routes = Blueprint('history_routes', __name__)
 def create_history():
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     data = request.get_json()
 
     if s.user_id != data["user_id"]:
-        return make_response("Cannot create history for a user you're not!", 403)
+        return make_response(jsonify({"err": "Session and Data userID mismatch"}), 403)
 
     history_access = History()
     history_id = history_access.create(
@@ -63,7 +63,7 @@ def update_history(id):
 def delete_history(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     history_access = History()
     h = history_access.read(id)
@@ -72,9 +72,9 @@ def delete_history(id):
         history_access.close_connection()
         return make_response(jsonify({"err": "History not found"}), 404)
 
-    if h.user_id != s.user_id: # TODO CHECK FOR ROLES
+    if h.user_id != s.user_id:  # TODO CHECK FOR ROLES
         history_access.close_connection()
-        return make_response("Cannot delete history that is not your own",403)
+        return make_response(jsonify({"err": "Session does not own this history item"}), 403)
 
     deleted_history = history_access.delete(id)
     history_access.close_connection()
