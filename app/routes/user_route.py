@@ -25,7 +25,19 @@ def login_user():
     user_access.close_connection()
     if user is None:
         return make_response(jsonify({"err": "Email or Password not found"}), 404)
-    return make_response(jsonify(user), 200)
+
+    session = SManager.login(user.user_id)
+    return make_response(jsonify(session), 200)  # Upon login we don't return user. We return a session
+
+# Get associated student/admin
+@app_users_routes.route('/classTrack/me', methods=['POST'])
+def get_me():
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+
+    s["isAdmin"] = admin
+    return make_response(jsonify(s), 200)
 
 # READ ALL
 @app_users_routes.route('/classTrack/users', methods=['GET'])
