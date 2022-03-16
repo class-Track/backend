@@ -45,12 +45,15 @@ def get_university(id):
 # UPDATE
 @app_universities_routes.route('/classTrack/university/update/<int:id>', methods=['PUT'])
 def update_university(id):
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
+
+    if not s.university_id == id:
+        return make_response(jsonify({"err": "User does not administrate this university"}), 403)
 
     data = request.get_json()
     university_access = Universities()

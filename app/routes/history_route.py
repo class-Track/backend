@@ -61,7 +61,7 @@ def update_history(id):
 # DELETE
 @app_history_routes.route('/classTrack/history/delete/<int:id>', methods=['POST'])
 def delete_history(id):
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -72,7 +72,7 @@ def delete_history(id):
         history_access.close_connection()
         return make_response(jsonify({"err": "History not found"}), 404)
 
-    if h.user_id != s.user_id:  # TODO CHECK FOR ROLES
+    if h.user_id != s.user_id and not admin:
         history_access.close_connection()
         return make_response(jsonify({"err": "Session does not own this history item"}), 403)
 
