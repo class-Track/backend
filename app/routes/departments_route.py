@@ -37,6 +37,9 @@ def get_department(id):
 def update_department(id):
     data = request.get_json()
     department_access = Departments()
+    if department_access.read(id) is None:
+        department_access.close_connection()
+        return make_response(jsonify({"err": "Department not found"}), 404)
     updated_department = department_access.update(
         id, data["university_id"], data["name"], data["classification"])
     department_access.close_connection()
@@ -46,6 +49,9 @@ def update_department(id):
 @app_departments_routes.route('/classTrack/department/delete/<int:id>', methods=['POST'])
 def delete_department(id):
     department_access = Departments()
+    if department_access.read(id) is None:
+        department_access.close_connection()
+        return make_response(jsonify({"err": "Department not found"}), 404)
     deleted_department = department_access.delete(id)
     department_access.close_connection()
     return make_response(jsonify({"department_id": deleted_department}), 200)
