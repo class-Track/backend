@@ -32,7 +32,7 @@ class SessionManager:
 
         return new_session.id  # Return the session ID
 
-    def find_session(self, session_id):
+    def find_session(self, session_id) -> Session:
         """Finds, extends, and returns a session with given ID. If the session is expired, it is removed."""
         if session_id not in self.__sessions__.keys():
             return None  # If it doesn't exist, get the heck out
