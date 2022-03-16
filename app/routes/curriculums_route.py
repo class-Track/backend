@@ -11,12 +11,12 @@ app_curriculum_routes = Blueprint('curriculums_routes', __name__)
 def create_curriculum():
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     data = request.get_json()
 
     if s.user_id != data["user_id"]:
-        return make_response("Cannot make a curriculum for a user that you aren't!", 403)
+        return make_response(jsonify({"err": "Session and curriculum user_id mismatch"}), 403)
 
     curriculum_access = Curriculums()
     curriculum_id = curriculum_access.create(
@@ -47,7 +47,7 @@ def get_curriculum(id):
 def update_curriculum(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     data = request.get_json()
     curriculum_access = Curriculums()
@@ -61,18 +61,18 @@ def update_curriculum(id):
 def delete_curriculum(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     curriculum_access = Curriculums()
 
     c = curriculum_access.read(id)
     if c is None:
         curriculum_access.close_connection()
-        return make_response(jsonify({"err":"Curriculum was not found"}), 404)
+        return make_response(jsonify({"err": "Curriculum was not found"}), 404)
 
     if c.user_id != s.user_id:
         curriculum_access.close_connection()
-        return make_response("Cannot delete a curriculum you do not own", 403)
+        return make_response(jsonify({"err": "Session does not own curriculum"}), 403)
 
     deleted_curriculum = curriculum_access.delete(id)
     curriculum_access.close_connection()

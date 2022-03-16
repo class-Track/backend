@@ -11,12 +11,12 @@ app_curriculum_ratings_routes = Blueprint('curriculum_ratings_routes', __name__)
 def create_curriculum_rating():
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     data = request.get_json()
 
     if s.user_id != data["user_id"]:
-        return make_response("Cannot make a rating for a user that you aren't!", 403)
+        return make_response(jsonify({"err": "Session and Curriculum Rating user_id mistmatch"}), 403)
 
     curriculum_rating_access = Curriculum_Ratings()
     curriculum_rating_id = curriculum_rating_access.create(
@@ -47,12 +47,12 @@ def get_curriculum_rating(id):
 def update_curriculum_rating(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     data = request.get_json()
 
     if s.user_id != data["user_id"]:
-        return make_response("Cannot update a rating for a user that you aren't!", 403)
+        return make_response(jsonify({"err": "Session and curriculum rating user_id mismatch"}), 403)
 
     curriculum_rating_access = Curriculum_Ratings()
     if curriculum_rating_access.read(id) is None:
@@ -68,7 +68,7 @@ def update_curriculum_rating(id):
 def delete_curriculum_rating(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     curriculum_rating_access = Curriculum_Ratings()
 
@@ -80,7 +80,7 @@ def delete_curriculum_rating(id):
 
     if c.user_id != s.user_id:
         curriculum_rating_access.close_connection()
-        return make_response("Cannot delete a rating that you didn't make!", 401)
+        return make_response(jsonify({"err": "Session does not own this curriculum rating"}), 401)
 
     deleted_curriculum_rating = curriculum_rating_access.delete(id)
     curriculum_rating_access.close_connection()

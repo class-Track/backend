@@ -11,10 +11,10 @@ app_degrees_routes = Blueprint('degrees_routes', __name__)
 def create_degree():
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     degree_access = Degrees()
@@ -46,10 +46,10 @@ def get_degree(id):
 def update_degree(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     degree_access = Degrees()
@@ -66,10 +66,10 @@ def update_degree(id):
 def delete_degree(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     degree_access = Degrees()
     if degree_access.read(id) is None:

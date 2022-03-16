@@ -12,10 +12,10 @@ def create_university():
 
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # If this is ever replaced by a role, replace this
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     university_access = Universities()
@@ -47,10 +47,10 @@ def get_university(id):
 def update_university(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     data = request.get_json()
     university_access = Universities()
@@ -67,10 +67,10 @@ def update_university(id):
 def delete_university(id):
     s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
-        return make_response("Invalid Session", 401)
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not False:  # if this is ever replaced by a role, check it.
-        return make_response("Insufficient permissions", 403)
+        return make_response(jsonify({"err": "Insufficient Permissions"}), 403)
 
     university_access = Universities()
     if university_access.read(id) is None:
