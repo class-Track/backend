@@ -10,7 +10,7 @@ def create_history():
     data = request.get_json()
     history_access = History()
     history_id = history_access.create(
-        data["name"], data["codification"], data["state"], data["country"])
+        data["user_id"], data["curriculum_id"])
     history_access.close_connection()
     return make_response(jsonify(history_id), 200)
 
@@ -37,8 +37,11 @@ def get_history(id):
 def update_history(id):
     data = request.get_json()
     history_access = History()
+    if history_access.read(id) is None:
+        history_access.close_connection()
+        return make_response(jsonify({"err": "History not found"}), 404)
     updated_history = history_access.update(
-        id, data["name"], data["codification"], data["state"], data["country"])
+        id, data["user_id"], data["curriculum_id"])
     history_access.close_connection()
     return make_response(jsonify({"history_id": updated_history}), 200)
 
@@ -46,6 +49,9 @@ def update_history(id):
 @app_history_routes.route('/classTrack/history/delete/<int:id>', methods=['POST'])
 def delete_history(id):
     history_access = History()
+    if history_access.read(id) is None:
+        history_access.close_connection()
+        return make_response(jsonify({"err": "History not found"}), 404)
     deleted_history = history_access.delete(id)
     history_access.close_connection()
-    return make_response(jsonify({"history_id": deleted_history}), 200)
+    return make_response(jsonify({"history_id": deleted_history}), 200)        

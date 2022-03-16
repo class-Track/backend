@@ -37,6 +37,9 @@ def get_user(id):
 def update_user(id):
     data = request.get_json()
     user_access = Users()
+    if user_access.read(id) is None:
+        user_access.close_connection()
+        return make_response(jsonify({"err": "User not found"}), 404)
     updated_user = user_access.update(
         id, data["degree_id"], data["first_name"], data["last_name"], data["email"], data["password"])
     user_access.close_connection()
@@ -46,6 +49,9 @@ def update_user(id):
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
     user_access = Users()
+    if user_access.read(id) is None:
+        user_access.close_connection()
+        return make_response(jsonify({"err": "User not found"}), 404)
     deleted_user = user_access.delete(id)
     user_access.close_connection()
-    return make_response(jsonify({"user_id": deleted_user}), 200)
+    return make_response(jsonify({"user_id": deleted_user}), 200)        

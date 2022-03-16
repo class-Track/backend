@@ -31,8 +31,8 @@ class History:
             cursor.execute(
                 "SELECT user_id, curriculum_id FROM history")
             self.connection.commit()
-            users = cursor.fetchall()
-            return users
+            histories = cursor.fetchall()
+            return histories
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -40,10 +40,10 @@ class History:
                            {"history_id": id})
             self.connection.commit()
             try:
-                user = cursor.fetchone()
+                history = cursor.fetchone()
             except TypeError:
-                user = None
-            return user
+                history = None
+            return history
 
     def update(self, id, user_id, curriculum_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
