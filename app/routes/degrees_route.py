@@ -38,7 +38,7 @@ def update_degree(id):
     data = request.get_json()
     degree_access = Degrees()
     updated_degree = degree_access.update(
-        id, data["name"], data["codification"], data["state"], data["\country"])
+        id, data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
     degree_access.close_connection()
     return make_response(jsonify({"degree_id": updated_degree}), 200)
 

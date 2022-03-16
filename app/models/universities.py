@@ -31,8 +31,8 @@ class Universities:
             cursor.execute(
                 "SELECT name, codification, state, country FROM universities")
             self.connection.commit()
-            users = cursor.fetchall()
-            return users
+            universities = cursor.fetchall()
+            return universities
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -40,10 +40,10 @@ class Universities:
                            {"university_id": id})
             self.connection.commit()
             try:
-                user = cursor.fetchone()
+                university = cursor.fetchone()
             except TypeError:
-                user = None
-            return user
+                university = None
+            return university
 
     def update(self, id, name, codification, state, country):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:

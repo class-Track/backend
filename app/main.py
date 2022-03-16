@@ -5,11 +5,13 @@ import gunicorn
 from flask import Flask
 from app.routes.universities_route import app_university_routes
 from app.routes.degrees_route import app_degrees_routes
+from app.routes.departments_route import app_departments_routes
 
 app = Flask(__name__)
 
 app.register_blueprint(app_university_routes)
 app.register_blueprint(app_degrees_routes)
+app.register_blueprint(app_departments_routes)
 
 @app.route('/')
 def hello():
