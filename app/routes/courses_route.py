@@ -9,6 +9,13 @@ app_course_routes = Blueprint('courses_routes', __name__)
 # CREATE Course
 @app_course_routes.route('/classTrack/course', methods=['POST'])
 def create_course():
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
+    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
+        return make_response("Insufficient permissions", 403)
+
     data = request.get_json()
     course_access = Courses()
     course_id = course_access.create(
@@ -37,6 +44,13 @@ def get_course(id):
 # UPDATE
 @app_course_routes.route('/classTrack/course/update/<int:id>', methods=['PUT'])
 def update_course(id):
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
+    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
+        return make_response("Insufficient permissions", 403)
+
     data = request.get_json()
     course_access = Courses()
     if course_access.read(id) is None:
@@ -50,6 +64,13 @@ def update_course(id):
 # DELETE
 @app_course_routes.route('/classTrack/course/delete/<int:id>', methods=['POST'])
 def delete_course(id):
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    if s is None:
+        return make_response("Invalid Session", 401)
+
+    if not False:  # TODO Check for admin role and/or check if this is one of the university's admin
+        return make_response("Insufficient permissions", 403)
+
     course_access = Courses()
     if course_access.read(id) is None:
         course_access.close_connection()
