@@ -38,7 +38,7 @@ def get_user(id):
 @app_users_routes.route('/classTrack/user/update/<int:id>', methods=['PUT'])
 def update_user(id):
 
-    s = SManager.find_session(request.headers.get("SessionID"))
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
         return make_response("Invalid Session", 401)
 
@@ -58,11 +58,11 @@ def update_user(id):
 # DELETE
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
-    s = SManager.find_session(request.headers.get("SessionID"))
+    s = SManager.get_tied_user(request.headers.get("SessionID"))
     if s is None:
         return make_response("Invalid Session", 401)
 
-    if s.user_id() != id:  # TODO: CHECK FOR USER ROLES
+    if s.user_id != id:  # TODO: CHECK FOR USER ROLES
         return make_response("Session is not tied to this user", 403)
 
     user_access = Users()
