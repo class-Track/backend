@@ -59,8 +59,34 @@ class SessionManager:
         session_user = u.read(s.user_id())
         u.close_connection()
 
-        return session_user
+        # We now return this as this
 
+        return session_user, True
+
+    def get_tied_student_or_admin(self,session_id):
+        """Finds the session using find_session and gets the associated student or admin from the DB. returns
+        a tuple with the student or admin, and a boolean determining if the user is a student or admin"""
+
+        # This maybe should've been in the model all things considered. Something tells me a similar function will be
+        # Needed later.
+
+        s = self.find_session(session_id)
+
+        if s is None:
+            return None
+
+        # TODO HEY REMEMBER TO UPDATE THIS WHEN WE UPDATE THE MODELS
+        u = Users()
+        session_user_as_student = u.readStudent(s.user_id())
+        session_user_as_admin = u.readAdmin(s.user_id())
+        u.close_connection()
+
+        # We now return this as this
+
+        if session_user_as_admin is None:
+            return session_user_as_student, False
+        else:
+            return session_user_as_admin, True
 
     def logout(self, session_id):
         """Removes a session with given ID. In essence, logs a user out."""
