@@ -16,7 +16,7 @@ class Curriculums:
             password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
         )
 
-    def create(self, deptCode, user_id, department_id):
+    def create(self, name, deptCode, user_id, department_id):
         curriculum = '{}_{}'.format(deptCode, user_id)
         
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -30,10 +30,10 @@ class Curriculums:
             curriculum_id = '{}_V{}'.format(curriculum, count+1)
 
             cursor.execute(
-                "INSERT INTO curriculums (curriculum_id, user_id, department_id, rating)"
-                " VALUES ( %(curriculum_id)s, %(user_id)s, %(department_id)s, 0)"
+                "INSERT INTO curriculums (name, curriculum_id, user_id, department_id, rating)"
+                " VALUES ( %(name)s, %(curriculum_id)s, %(user_id)s, %(department_id)s, 0)"
                 " RETURNING curriculum_id", {
-                    "curriculum_id": curriculum_id, "user_id": user_id, "department_id": department_id, "rating": 0 }
+                    "name": name, "curriculum_id": curriculum_id, "user_id": user_id, "department_id": department_id, "rating": 0 }
             )
             self.connection.commit()
             curriculum_id = cursor.fetchone()
@@ -42,14 +42,14 @@ class Curriculums:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT curriculum_id, user_id, department_id, rating FROM curriculums")
+                "SELECT name, curriculum_id, user_id, department_id, rating FROM curriculums")
             self.connection.commit()
             curriculums = cursor.fetchall()
             return curriculums
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT curriculum_id, user_id, department_id, rating FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
+            cursor.execute("SELECT name, curriculum_id, user_id, department_id, rating FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
                            {"curriculum_id": id})
             self.connection.commit()
             try:
@@ -58,13 +58,23 @@ class Curriculums:
                 curriculum = None
             return curriculum
 
-    def update(self, id, rating):
+    def update_rating(self, id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "UPDATE curriculums"
                 " SET rating=%(rating)s"
                 " WHERE curriculum_id=%(curriculum_id)s ",
                 {"curriculum_id": id, "rating": rating})
+            self.connection.commit()
+            return id
+
+    def rename(self, id, name):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "UPDATE curriculums"
+                " SET name=%(name)s"
+                " WHERE curriculum_id=%(curriculum_id)s ",
+                {"curriculum_id": id, "name": name})
             self.connection.commit()
             return id
 
