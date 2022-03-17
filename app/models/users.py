@@ -47,7 +47,7 @@ class Users:
     def login(self, email, password):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT email, password FROM users WHERE email=%(email)s",
+                "SELECT user_id, email, password FROM users WHERE email=%(email)s",
                 {"email":email})
             self.connection.commit()
             try:
@@ -56,7 +56,7 @@ class Users:
                 user = None
             
             if user and check_password_hash(user['password'], str(password)):
-                user = user['email']
+                user = { 'user_id': user['user_id'], 'email': user['email'] }
             else:
                 user = None
 
