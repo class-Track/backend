@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.curriculum_ratings import Curriculum_Ratings
-from app.SessionManager import SessionManager
+from app.models.session_manager import SessionManager
 
 SManager = SessionManager()
 app_curriculum_ratings_routes = Blueprint('curriculum_ratings_routes', __name__)

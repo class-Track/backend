@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response, Response
 from flask.json import jsonify
 from app.models.departments import Departments
-from app.SessionManager import SessionManager
+from app.models.session_manager import SessionManager
 
 SManager = SessionManager()
 app_departments_routes = Blueprint('departments_routes', __name__)
