@@ -1,5 +1,5 @@
 import uuid
-from app.Session import Session
+from app.models.session import Session
 from app.models.users import Users
 
 
