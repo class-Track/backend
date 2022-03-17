@@ -89,7 +89,8 @@ def update_degree(id):
 # DELETE
 @app_degrees_routes.route('/classTrack/degree/delete/<int:id>', methods=['POST'])
 def delete_degree(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -105,7 +106,7 @@ def delete_degree(id):
         return make_response(jsonify({"err": "Degree not found"}), 404)
 
     # We can assume the department for this degree exists as its a foreign key
-    if __get_department__(deg.department_id).university_id != s.university_id:
+    if __get_department__(deg['department_id'])['university_id'] != s['university_id']:
         degree_access.close_connection()
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
