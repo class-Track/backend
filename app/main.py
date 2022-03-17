@@ -11,8 +11,10 @@ from app.routes.user_route import app_users_routes
 from app.routes.history_route import app_history_routes
 from app.routes.curriculums_route import app_curriculum_routes
 from app.routes.courses_route import app_course_routes
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app)
 
 app.register_blueprint(app_universities_routes)
 app.register_blueprint(app_degrees_routes)
