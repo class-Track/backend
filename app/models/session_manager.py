@@ -28,8 +28,8 @@ class SessionManager:
         while new_session.id in self.__sessions__.keys():  # Ensure this isn't a duplicate
             new_session.id = uuid.uuid4()
 
-        self.__sessions__[new_session.id] = new_session  # Actually add the session
-
+        self.__sessions__[str(new_session.id)] = new_session  # Actually add the session
+        
         return new_session.id  # Return the session ID
 
     def find_session(self, session_id) -> Session:
@@ -94,5 +94,6 @@ class SessionManager:
         if session_id not in self.__sessions__.keys():
             return None  # Returns no session because there is no session to remove
 
-        return self.__sessions__.pop(session_id)  # Returns the session that is removed
+        self.__sessions__.pop(session_id)
+        return True  # Returns the session that is removed
 
