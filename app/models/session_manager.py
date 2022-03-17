@@ -73,7 +73,7 @@ class SessionManager:
         s = self.find_session(session_id)
 
         if s is None:
-            return None
+            return None, None
 
         # TODO HEY REMEMBER TO UPDATE THIS WHEN WE UPDATE THE MODELS
         u = Users()
