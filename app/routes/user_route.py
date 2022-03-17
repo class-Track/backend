@@ -26,7 +26,7 @@ def login_user():
     if user is None:
         return make_response(jsonify({"err": "Email or Password not found"}), 404)
 
-    session = SManager.login(user.user_id)
+    session = SManager.login(user['user_id'])
     return make_response(jsonify(session), 200)  # Upon login we don't return user. We return a session
 
 @app_users_routes.route('/classTrack/logout', methods=['POST'])

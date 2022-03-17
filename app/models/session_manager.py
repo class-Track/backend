@@ -23,7 +23,7 @@ class SessionManager:
         """Adds a user to the list of active sessions. In essence, it logs them in. This is the last step in that
         process"""
 
-        new_session = Session.Session(user_id)
+        new_session = Session(user_id)
 
         while new_session.id in self.__sessions__.keys():  # Ensure this isn't a duplicate
             new_session.id = uuid.uuid4()

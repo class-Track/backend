@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 
 class Session:
@@ -33,7 +33,7 @@ class Session:
 
     def extend_session(self):
         """Extends a session by 7 days"""
-        self._expiration_date_ = datetime.now + timedelta(7)
+        self._expiration_date_ = date.today() + timedelta(days=7)
 
     def equals(self, other_session):
         """checks if this session equals another session"""
