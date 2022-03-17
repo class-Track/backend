@@ -10,25 +10,25 @@ app_degrees_routes = Blueprint('degrees_routes', __name__)
 # CREATE Degree
 @app_degrees_routes.route('/classTrack/degree', methods=['POST'])
 def create_degree():
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not admin:
         return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    data = request.get_json()
     d = __get_department__(data["department_id"])  # We should probably have checked if the department we were trying to
                                                    # add this degree to existed to begin with.
     if d is None:
         return make_response(jsonify({"err": "Department not found"}), 404)
 
-    if d.university_id != s.university_id:
+    if d['university_id'] != s['university_id']:
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     degree_access = Degrees()
     degree_id = degree_access.create(
-        data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
+       data["name"], data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
     degree_access.close_connection()
     return make_response(jsonify(degree_id), 200)
 
@@ -37,6 +37,14 @@ def create_degree():
 def get_all_degrees():
     degree_access = Degrees()
     degrees = degree_access.read_all()
+    degree_access.close_connection()
+    return make_response(jsonify(degrees), 200)
+
+# READ ALL
+@app_degrees_routes.route('/classTrack/degrees_dept', methods=['GET'])
+def get_all_degrees_with_dept():
+    degree_access = Degrees()
+    degrees = degree_access.read_all_with_dept()
     degree_access.close_connection()
     return make_response(jsonify(degrees), 200)
 
@@ -53,20 +61,20 @@ def get_degree(id):
 # UPDATE
 @app_degrees_routes.route('/classTrack/degree/update/<int:id>', methods=['PUT'])
 def update_degree(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not admin:
         return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    data = request.get_json()
     d = __get_department__(data["department_id"])
 
     if d is None:
         return make_response(jsonify({"err": "Department not found"}), 404)
 
-    if d.university_id != s.university_id:
+    if d['university_id'] != s['university_id']:
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     degree_access = Degrees()
@@ -74,14 +82,15 @@ def update_degree(id):
         degree_access.close_connection()
         return make_response(jsonify({"err": "Degree not found"}), 404)
     updated_degree = degree_access.update(
-        id, data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
+        id, data["name"], data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
     degree_access.close_connection()
     return make_response(jsonify({"degree_id": updated_degree}), 200)
 
 # DELETE
 @app_degrees_routes.route('/classTrack/degree/delete/<int:id>', methods=['POST'])
 def delete_degree(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -97,7 +106,7 @@ def delete_degree(id):
         return make_response(jsonify({"err": "Degree not found"}), 404)
 
     # We can assume the department for this degree exists as its a foreign key
-    if __get_department__(deg.department_id).university_id != s.university_id:
+    if __get_department__(deg['department_id'])['university_id'] != s['university_id']:
         degree_access.close_connection()
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
