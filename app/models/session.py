@@ -8,7 +8,7 @@ class Session:
     id = uuid.uuid4()  # Generates a random UUID when instantiating the Session
     """ID of this session. This is what the frontend receives and uses as a key to do stuff"""
 
-    _expiration_date_ = datetime.min  # This is
+    _expiration_date_ = datetime.min # This is
     """Expiration date of this session. If the time is past this date, this session is expired, and cannot be used!"""
 
     def expiration_date(self):
@@ -24,7 +24,7 @@ class Session:
 
     def is_expired(self):
         """boolean that determines if this session is already expired"""
-        return datetime.now > self._expiration_date_
+        return datetime.now().date() > self._expiration_date_
 
     def __init__(self, user_id):
         """Constructor for a session for given user_id"""

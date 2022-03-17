@@ -35,7 +35,7 @@ def login_user():
 def logout_user():
     data = request.get_json()
     removed_session = SManager.logout(data["session_id"])
-    
+
     if removed_session is None:  # This is technically not necessary. I only add this check because I don't want to make
         return make_response(jsonify({"err": "Session was not found"}, 404))  # Jsonify flip because it received None
 
@@ -44,7 +44,8 @@ def logout_user():
 # Get associated student/admin
 @app_users_routes.route('/classTrack/me', methods=['POST'])
 def get_me():
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
