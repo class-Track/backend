@@ -18,29 +18,39 @@ class Users:
     def signUp(self, isAdmin, variant_id, first_name, last_name, email, password):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "INSERT INTO users (first_name, last_name, email, password)"
-                " VALUES ( %(first_name)s, %(last_name)s, %(email)s, %(password)s)"
-                " RETURNING user_id", {
-                    "first_name": first_name, "last_name": last_name, "email": email, "password": generate_password_hash(password, method='sha256') }
+                "SELECT email FROM users WHERE email=%(email)s",
+                {"email":email}
             )
             self.connection.commit()
-            user_id = cursor.fetchone()
-            
-            if(isAdmin):
-                cursor.execute(
-                    "INSERT INTO admins (admin_id, university_id)"
-                    " VALUES ( %(admin_id)s, %(university_id)s)"
-                    " RETURNING admin_id", {
-                        "admin_id": user_id['user_id'], "university_id": variant_id }
-                )
+            userExists = cursor.fetchone()
+
+            if userExists:
+                user_id = None
             else:
                 cursor.execute(
-                    "INSERT INTO students (student_id, degree_id)"
-                    " VALUES ( %(student_id)s, %(degree_id)s)"
-                    " RETURNING student_id", {
-                        "student_id": user_id['user_id'], "degree_id": variant_id }
+                    "INSERT INTO users (first_name, last_name, email, password)"
+                    " VALUES ( %(first_name)s, %(last_name)s, %(email)s, %(password)s)"
+                    " RETURNING user_id", {
+                        "first_name": first_name, "last_name": last_name, "email": email, "password": generate_password_hash(password, method='sha256') }
                 )
-            self.connection.commit()
+                self.connection.commit()
+                user_id = cursor.fetchone()
+                
+                if(isAdmin):
+                    cursor.execute(
+                        "INSERT INTO admins (admin_id, university_id)"
+                        " VALUES ( %(admin_id)s, %(university_id)s)"
+                        " RETURNING admin_id", {
+                            "admin_id": user_id['user_id'], "university_id": variant_id }
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO students (student_id, degree_id)"
+                        " VALUES ( %(student_id)s, %(degree_id)s)"
+                        " RETURNING student_id", {
+                            "student_id": user_id['user_id'], "degree_id": variant_id }
+                    )
+                self.connection.commit()
 
             return user_id
 
