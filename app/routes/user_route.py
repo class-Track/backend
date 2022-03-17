@@ -14,6 +14,8 @@ def create_user():
     user_id = user_access.signUp(
         data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
     user_access.close_connection()
+    if not user_id:
+        return make_response(jsonify({"err": "There exists an account with this email"}), 400)
     return make_response(jsonify(user_id), 200)
 
 @app_users_routes.route('/classTrack/login', methods=['POST'])
