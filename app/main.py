@@ -3,8 +3,27 @@ import psycopg2
 import gunicorn
 
 from flask import Flask
+from app.routes.universities_routes import app_universities_routes
+from app.routes.degrees_routes import app_degrees_routes
+from app.routes.curriculum_ratings_routes import app_curriculum_ratings_routes
+from app.routes.departments_route import app_departments_routes
+from app.routes.user_route import app_users_routes
+from app.routes.history_route import app_history_routes
+from app.routes.curriculums_route import app_curriculum_routes
+from app.routes.courses_route import app_course_routes
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app)
+
+app.register_blueprint(app_universities_routes)
+app.register_blueprint(app_degrees_routes)
+app.register_blueprint(app_curriculum_ratings_routes)
+app.register_blueprint(app_departments_routes)
+app.register_blueprint(app_users_routes)
+app.register_blueprint(app_history_routes)
+app.register_blueprint(app_curriculum_routes)
+app.register_blueprint(app_course_routes)
 
 
 @app.route('/')
