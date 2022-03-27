@@ -14,3 +14,4 @@ build/
 *.egg-info/
 /.idea
 /.vs
+conf/db_access.env
