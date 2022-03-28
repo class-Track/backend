@@ -1,14 +1,22 @@
+import pytest 
 from flask import Flask
-from backend.app.routes.courses_route import courses_route
-import json
 
-
-def  test_create_course():
+@pytest.fixture()
+def app():
     app = Flask(__name__)
-    courses_route(app)
-    client = app.test_client()
-    url = '/'
 
-    response = client.get(url)
-    assert response.get_data() == b'Hello, Class Track!'
-    assert response.status_code == 200
+    yield app
+
+@pytest.fixture()
+def client(app):
+    return app.test_client()
+
+@pytest.fixture()
+def runner(app):
+    return app.test_cli_runner() 
+
+def test_hello(client):
+    response = client.get('/')
+    assert response.get_data() == 'Hello, Class Track!'
+        
+
