@@ -41,11 +41,11 @@ def get_curriculum(id):
         return make_response(jsonify({"err": "Curriculum not found"}), 404)
     return make_response(jsonify(curriculum), 200)
 
-# UPDATE rating
+# UPDATE
 @app_curriculum_routes.route('/classTrack/curriculum/update/<string:id>', methods=['PUT'])
 def update_curriculum_rating(id):
     data = request.get_json()
-    s = SManager.get_tied_user(data["session_id"])
+    s, _ = SManager.get_tied_user(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -59,7 +59,7 @@ def update_curriculum_rating(id):
 @app_curriculum_routes.route('/classTrack/curriculum/rename/<string:id>', methods=['PUT'])
 def rename_curriculum(id):
     data = request.get_json()
-    s = SManager.get_tied_user(data["session_id"])
+    s, _ = SManager.get_tied_user(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
