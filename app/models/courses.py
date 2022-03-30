@@ -1,14 +1,12 @@
 from dotenv import load_dotenv
-import os
-import psycopg2
 from psycopg2.extras import RealDictCursor
-from app.dbconfig import config
+from app.dbconnection import dbconnection
 
 load_dotenv()
 
 class Courses:
     def __init__(self):
-        self.connection = psycopg2.connect(**config)
+        self.connection = dbconnection().connection()
 
     def create(self, department_id, name, classification):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -60,4 +58,5 @@ class Courses:
 
     # Clean-Up
     def close_connection(self):
-        self.connection.close()
+        print("no")
+        # self.connection.close()
