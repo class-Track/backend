@@ -10,20 +10,20 @@ app_course_routes = Blueprint('courses_routes', __name__)
 # CREATE Course
 @app_course_routes.route('/classTrack/course', methods=['POST'])
 def create_course():
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not admin:
         return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    data = request.get_json()
     d = __get_department__(data["department_id"])
 
     if d is None:
         return make_response(jsonify({"err": "Department not found"}), 404)
 
-    if d.university_id != s.university_id:
+    if d['university_id'] != s['university_id']:
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     course_access = Courses()
@@ -53,20 +53,20 @@ def get_course(id):
 # UPDATE
 @app_course_routes.route('/classTrack/course/update/<int:id>', methods=['PUT'])
 def update_course(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
     if not admin:
         return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    data = request.get_json()
     d = __get_department__(data["department_id"])
 
     if d is None:
         return make_response(jsonify({"err": "Department not found"}), 404)
 
-    if d.university_id != s.university_id:
+    if d['university_id'] != s['university_id']:
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     course_access = Courses()
@@ -81,7 +81,8 @@ def update_course(id):
 # DELETE
 @app_course_routes.route('/classTrack/course/delete/<int:id>', methods=['POST'])
 def delete_course(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -95,7 +96,7 @@ def delete_course(id):
         return make_response(jsonify({"err": "Course not found"}), 404)
 
     # We can assume the department for this degree exists as its a foreign key
-    if __get_department__(c.department_id).university_id != s.university_id:
+    if __get_department__(c['department_id'])['university_id'] != s['university_id']:
         course_access.close_connection()
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
