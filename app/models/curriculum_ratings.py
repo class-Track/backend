@@ -45,13 +45,13 @@ class Curriculum_Ratings:
                 rating = None
             return rating
 
-    def update(self, id, user_id, curriculum_id, rating):
+    def update(self, id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "UPDATE curriculum_ratings"
-                " SET user_id=%(user_id)s, curriculum_id=%(curriculum_id)s, rating=%(rating)s"
+                " SET rating=%(rating)s"
                 " WHERE rating_id=%(rating_id)s ",
-                {"rating_id": id, "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating})
+                {"rating_id": id, "rating": rating})
             self.connection.commit()
             return id
 
