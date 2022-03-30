@@ -8,7 +8,7 @@ load_dotenv()
 
 class Courses:
     def __init__(self):
-        self.connection = psycopg2.connect(config)
+        self.connection = psycopg2.connect(**config)
 
     def create(self, department_id, name, classification):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
