@@ -80,5 +80,5 @@ def test_update_course(client):
     assert response.status_code == 200
 
 def test_delete_course(client):
-    response = client.delete('classTrack/course/delete/4')
+    response = client.post('classTrack/course/delete/4')
     assert response.status_code == 200
