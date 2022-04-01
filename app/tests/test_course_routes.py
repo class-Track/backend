@@ -34,12 +34,7 @@ def runner(app):
     return app.test_cli_runner()
 
 
-# def test_get_all_courses(client):
-#     response = client.get('classTrack/courses')
-#     assert response.status_code == 200
-
-
-def test_create_course(client):
+def test_course_routes(client):
     # Login to admin account
     admin = client.post('classTrack/login', json=admin_account)
     assert type(admin.get_data()) == bytes
@@ -49,14 +44,35 @@ def test_create_course(client):
     # Create course
     response = client.post('classTrack/course', json=course)
 
-    course_id = response.get_data().strip().decode("utf-8")['course_id'] #maybe?
+    course_id = json.loads(
+        response.get_data().strip().decode("utf-8"))['course_id']
+
+    assert response.status_code == 200 and type(course_id) == int
+
+    # Read course by id
+
+    del course['session_id']
+    course["course_id"] = course_id
+    response = client.get('classTrack/course/' + str(course_id))
+    assert response.status_code == 200 and json.loads(
+        response.get_data().strip().decode("utf-8")) == course
+
+    # Update course
+    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
+    course["name"] = "Databases2"
+    course["classification"] = "CIIC-5060"
+
+    response = client.put('classTrack/course/update/' + str(course_id),
+                          json=course)
+    assert response.status_code == 200 and type(course_id) == int
+
+    # Delete course
+    response = client.post('classTrack/course/delete/' + str(course_id), json=course)
+    assert response.status_code == 200 and type(course_id) == int
 
 
-    assert response.status_code == 200
-
-
-# def test_read_course_by_id(client):
-#     response = client.get('classTrack/course/3')
+# def test_get_all_courses(client):
+#     response = client.get('classTrack/courses')
 #     assert response.status_code == 200
 
 
