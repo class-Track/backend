@@ -44,12 +44,14 @@ def test_create_course(client):
     admin = client.post('classTrack/login', json=admin_account)
     assert type(admin.get_data()) == bytes
 
-    headers = {
-        'SessionID': admin.get_data().strip().decode("utf-8").replace('"', "")
-    }
+    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
 
     # Create course
-    response = client.post('classTrack/course', json=course, headers=headers)
+    response = client.post('classTrack/course', json=course)
+
+    course_id = response.get_data().strip().decode("utf-8")['course_id'] #maybe?
+
+
     assert response.status_code == 200
 
 
