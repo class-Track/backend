@@ -110,7 +110,7 @@ class Users:
                 "UPDATE users"
                 " SET first_name=%(first_name)s, last_name=%(last_name)s, email=%(email)s, password=%(password)s"
                 " WHERE user_id=%(user_id)s ",
-                {"user_id": id, "first_name": first_name, "last_name": last_name, "email": email, "password": password})
+                {"user_id": id, "first_name": first_name, "last_name": last_name, "email": email, "password": generate_password_hash(password, method='sha256') })
             self.connection.commit()
 
             if(isAdmin):
