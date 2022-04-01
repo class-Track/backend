@@ -83,17 +83,16 @@ def get_admin(id):
 # UPDATE
 @app_users_routes.route('/classTrack/user/update/<int:id>', methods=['PUT'])
 def update_user(id):
-
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id() != id and not admin:
+    if s['user_id'] != id and not admin:
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
-    data = request.get_json()
     user_access = Users()
-    if user_access.readAdmin(id) is None and user_access.readStudent(id):
+    if user_access.readAdmin(id) is None and user_access.readStudent(id) is None:
         user_access.close_connection()
         return make_response(jsonify({"err": "User not found"}), 404)
     updated_user = user_access.update(
@@ -104,15 +103,16 @@ def update_user(id):
 # DELETE
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id != id and not admin:  # honestly I cannot believe this uses "and" and "not" instead of && and !
+    if s['user_id'] != id and not admin:  # honestly I cannot believe this uses "and" and "not" instead of && and !
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     user_access = Users()
-    if user_access.readAdmin(id) is None and user_access.readStudent(id):
+    if user_access.readAdmin(id) is None and user_access.readStudent(id) is None:
         user_access.close_connection()
         return make_response(jsonify({"err": "User not found"}), 404)
     deleted_user = user_access.delete(id)
