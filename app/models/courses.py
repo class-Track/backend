@@ -55,8 +55,3 @@ class Courses:
                 "DELETE FROM courses WHERE course_id=%(course_id)s", {"course_id": id})
             self.connection.commit()
             return id
-
-    # Clean-Up
-    def close_connection(self):
-        print("no")
-        # self.connection.close()
