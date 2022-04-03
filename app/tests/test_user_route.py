@@ -1,7 +1,6 @@
 import json
 import pytest
 from app.main import create_app
-import psycopg2
 
 # Global Variables
 test_user = {

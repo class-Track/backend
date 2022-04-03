@@ -33,17 +33,13 @@ def client(app):
 def runner(app):
     return app.test_cli_runner()
 
-@pytest.fixture
-def sessionID(client):
+
+def test_course_routes(client):
+    # Login to admin account
     admin = client.post('classTrack/login', json=admin_account)
     assert type(admin.get_data()) == bytes
 
-    return admin.get_data().strip().decode("utf-8").replace('"', "")
-
-
-
-def test_course_routes(client, sessionID):
-    course['session_id'] = sessionID
+    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
 
     # Create course
     response = client.post('classTrack/course', json=course)
@@ -62,7 +58,7 @@ def test_course_routes(client, sessionID):
         response.get_data().strip().decode("utf-8")) == course
 
     # Update course
-    course['session_id'] = sessionID
+    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
     course["name"] = "Databases2"
     course["classification"] = "CIIC-5060"
 
