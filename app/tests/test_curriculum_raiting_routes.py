@@ -1,77 +1,80 @@
-# import pytest
-# from app.main import create_app
+import json
+import pytest
+from app.main import create_app
 
-# # Global Variables
-# test_user = {
-#     "email": "test@testjulian.com",
-#     "password": "test"
-# }
-
-
-# @pytest.fixture
-# def app():
-#     app = create_app()
-#     app.config.update({
-#         "TESTING": True,
-#     })
-#     yield app
+# Global Variables
+test_user = {
+    "email": "test@testjulian.com",
+    "password": "test"
+}
 
 
-# @pytest.fixture
-# def client(app):
-#     return app.test_client()
+@pytest.fixture
+def app():
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
 
 
-# @pytest.fixture
-# def runner(app):
-#     return app.test_cli_runner()
+@pytest.fixture
+def client(app):
+    return app.test_client()
 
 
-# @pytest.fixture
-# def login(client):
-#     # Login user to get SessionID
-#     user = client.post('classTrack/login', json=test_user)
-#     assert type(user.get_data()) == bytes
-
-#     sessionID = user.get_data().strip().decode('utf-8').replace('"', "")
-
-#     yield sessionID
+@pytest.fixture
+def runner(app):
+    return app.test_cli_runner()
 
 
-# def test_create_curriculum_rating(client, sessionID):
-#     # Curriculum rating
-#     rating = {
-#         'user_id': 70,
-#         'curriculum_id': 'CIIC_57_V1',
-#         'rating': 4
-#     }
+@pytest.fixture
+def login(client):
+    # Login user to get SessionID
+    user = client.post('classTrack/login', json=test_user)
+    assert type(user.get_data()) == bytes
 
-#     response = client.post('classTrack/curriculum_rating',
-#                            json=rating, headers={'SessionID': sessionID})
-#     assert response.status_code == 200
+    sessionID = user.get_data().strip().decode('utf-8').replace('"', "")
+
+    return sessionID
 
 
-# def test_get_all_curriculum_ratings(client):
-#     response = client.get('classTrack/curriculum_ratings')
-#     assert response.status_code == 200
+def test_create_curriculum_rating(client, login):
+    response = client.post('classTrack/me', json={'session_id': login})
+    user_id = json.loads(response.get_data().strip().decode("utf-8"))['user_id']
+
+    rating = {
+        'user_id': user_id,
+        'curriculum_id': 'CIIC_57_V1',
+        'rating': 4,
+        'session_id': login
+    }
+
+    # Create rating
+    response = client.post('classTrack/curriculum_rating',
+                           json=rating)
+    
+    rating_id = json.loads(
+        response.get_data().strip().decode("utf-8"))['rating_id']
+    assert response.status_code == 200 and type(rating_id) == int
+
+    # Read rating by id
+    response = client.get('classTrack/curriculum_rating/' + str(rating_id))
+
+    # Removing rating['session_id'] to prevent making a copy of the whole rating object
+    del rating['session_id']
+    assert response.status_code == 200 and json.loads(response.get_data().strip().decode("utf-8")) == rating
+
+    # Putting session_id inside of rating again since we will need it for later json inputs
+    rating['session_id'] = login
+
+    # Update curriculum rating
+    rating['rating'] = 3
+    response = client.put('classTrack/curriculum_rating/update/' + str(rating_id), json=rating)
+    assert response.status_code == 200 and json.loads(response.get_data().strip().decode("utf-8"))['rating_id'] == rating_id
+
+    # Delete curriculum rating
+    response = client.post('classTrack/curriculum_rating/delete/' + str(rating_id), json=rating)
+    assert response.status_code == 200 and json.loads(response.get_data().strip().decode("utf-8"))['rating_id'] == rating_id
 
 
-# def test_get_curriculum_rating_by_id(client):
-#     response = client.get('classTrack/curriculum_rating/3')
-#     assert response.status_code == 200
-
-
-# def test_update_curriculum_rating(client, sessionID):
-#     rating = {
-#         'user_id': 70,
-#         'curriculum_id': 'CIIC_57_V1',
-#         'rating': 3
-#     }
-
-#     response = client.put('classTrack/curriculum_rating/update/3',
-#                           json=rating, headers={'SessionID': sessionID})
-#     assert response.status_code == 200
-
-# def test_delete_curriculum_rating(client, sessionID):
-#     response = client.post('classTrack/curriculum_rating/delete/10')
-#     assert response.status_code == 200
