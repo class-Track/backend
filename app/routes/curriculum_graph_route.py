@@ -17,3 +17,4 @@ def create_route():
     curr = dao.create_curr(id, graph)
 
     return jsonify(curr)
+    

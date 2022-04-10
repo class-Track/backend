@@ -26,3 +26,4 @@ def close_driver():
         current_app.driver = None
 
         return current_app.driver
+        
