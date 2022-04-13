@@ -29,7 +29,6 @@ def create_course():
     course_access = Courses()
     course_id = course_access.create(
         data["department_id"], data["name"], data["classification"])
-    course_access.close_connection()
     return make_response(jsonify(course_id), 200)
 
 # READ ALL
@@ -37,7 +36,6 @@ def create_course():
 def get_all_courses():
     course_access = Courses()
     courses = course_access.read_all()
-    course_access.close_connection()
     return make_response(jsonify(courses), 200)
 
 # READ BY ID
@@ -45,7 +43,6 @@ def get_all_courses():
 def get_course(id):
     course_access = Courses()
     course = course_access.read(id)
-    course_access.close_connection()
     if course is None:
         return make_response(jsonify({"err": "Course not found"}), 404)
     return make_response(jsonify(course), 200)
@@ -71,11 +68,9 @@ def update_course(id):
 
     course_access = Courses()
     if course_access.read(id) is None:
-        course_access.close_connection()
         return make_response(jsonify({"err": "Course not found"}), 404)
     updated_course = course_access.update(
         id, data["department_id"], data["name"], data["classification"])
-    course_access.close_connection()
     return make_response(jsonify({"course_id": updated_course}), 200)
 
 # DELETE
@@ -92,22 +87,18 @@ def delete_course(id):
     course_access = Courses()
     c = course_access.read(id)
     if c is None:
-        course_access.close_connection()
         return make_response(jsonify({"err": "Course not found"}), 404)
 
     # We can assume the department for this degree exists as its a foreign key
     if __get_department__(c['department_id'])['university_id'] != s['university_id']:
-        course_access.close_connection()
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     deleted_course = course_access.delete(id)
-    course_access.close_connection()
     return make_response(jsonify({"course_id": deleted_course}), 200)
 
 
 def __get_department__(id):  # TODO: Eventually remove this
     departments_access = Departments()
     d = departments_access.read(id)
-    departments_access.close_connection()
     return d
 
