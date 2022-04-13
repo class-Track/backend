@@ -14,7 +14,7 @@ def create_app(test_config=None):
     from app.routes.history_route import app_history_routes
     from app.routes.curriculums_route import app_curriculum_routes
     from app.routes.courses_route import app_course_routes
-    from app.routes.curriculum_graph_route import app_curr_graph__routes
+    from app.routes.curriculum_graph_route import app_curr_graph_routes
     from flask_cors import CORS, cross_origin
 
     app = Flask(__name__)
@@ -42,7 +42,7 @@ def create_app(test_config=None):
     app.register_blueprint(app_history_routes)
     app.register_blueprint(app_curriculum_routes)
     app.register_blueprint(app_course_routes)
-    app.register_blueprint(app_curr_graph__routes)
+    app.register_blueprint(app_curr_graph_routes)
 
     @app.route('/')
     def hello():
