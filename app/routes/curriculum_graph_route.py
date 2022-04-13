@@ -9,12 +9,12 @@ app_curr_graph__routes = Blueprint('curr_graph__routes', __name__, url_prefix="/
 def create_route():
     data = request.get_json()
 
-    id = data['id']
     graph = data['graph']
+    co_reqs = data['co_reqs']
+    pre_reqs = data['pre_reqs']
 
     dao = CurruculumGraph(current_app.driver)
 
-    curr = dao.create_curr(id, graph)
+    curr = dao.create_curr(graph, co_reqs, pre_reqs)
 
     return jsonify(curr)
-    
