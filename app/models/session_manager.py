@@ -34,15 +34,24 @@ class SessionManager:
 
     def find_session(self, session_id) -> Session:
         """Finds, extends, and returns a session with given ID. If the session is expired, it is removed."""
+
+        print("Finding a session")
+
         if session_id is None:
+            print("Session ID is not defined")
             return None
 
         if session_id not in self.__sessions__.keys():
+            print("Could not find the session in the keys")
+            print("There are " + len(self.__sessions__) + " key(s)")
             return None  # If it doesn't exist, get the heck out
 
         if self.__sessions__[session_id].is_expired():
+            print("Session was expired. Adios")
             self.__sessions__.pop(session_id)
             return None  # If it's an expired session, remove it and leave
+
+        print("We found it, extending it, and getting the heck out")
 
         self.__sessions__[session_id].extend_session()  # Extend the session
         return self.__sessions__[session_id]  # Return it and adios
@@ -54,14 +63,17 @@ class SessionManager:
         if s is None:
             return None, None
 
+        print("Checking if this user is student or admin")
         u = Users()
         session_user_as_student = u.readStudent(s.user_id())
         session_user_as_admin = u.readAdmin(s.user_id())
 
         # We now return this as this
         if session_user_as_admin is None:
+            print("User was not an admin, so they're a student")
             return session_user_as_student, False
         else:
+            print("User is an admin")
             return session_user_as_admin, True
 
     def get_tied_student_or_admin(self,session_id):
