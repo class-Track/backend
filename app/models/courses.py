@@ -1,18 +1,12 @@
 from dotenv import load_dotenv
-import os
-import psycopg2
 from psycopg2.extras import RealDictCursor
+from app.dbconnection import dbconnection
 
 load_dotenv()
 
 class Courses:
     def __init__(self):
-        self.connection = psycopg2.connect(
-            host='ec2-34-231-183-74.compute-1.amazonaws.com',
-            database='ddetn88o84e93n',
-            user='oisewifxugdivf',
-            password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
-        )
+        self.connection = dbconnection().connection()
 
     def create(self, department_id, name, classification):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -61,7 +55,3 @@ class Courses:
                 "DELETE FROM courses WHERE course_id=%(course_id)s", {"course_id": id})
             self.connection.commit()
             return id
-
-    # Clean-Up
-    def close_connection(self):
-        self.connection.close()

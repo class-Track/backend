@@ -13,7 +13,6 @@ def create_user():
     user_access = Users()
     user_id = user_access.signUp(
         data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
-    user_access.close_connection()
     if not user_id:
         return make_response(jsonify({"err": "There exists an account with this email"}), 400)
     return make_response(jsonify(user_id), 200)
@@ -24,7 +23,6 @@ def login_user():
     user_access = Users()
     user = user_access.login(
         data["email"], data["password"])
-    user_access.close_connection()
     if user is None:
         return make_response(jsonify({"err": "Email or Password not found"}), 404)
 
@@ -57,7 +55,6 @@ def get_me():
 def get_all_users():
     user_access = Users()
     users = user_access.read_all()
-    user_access.close_connection()
     return make_response(jsonify(users), 200)
 
 # READ Student BY ID
@@ -65,7 +62,6 @@ def get_all_users():
 def get_student(id):
     user_access = Users()
     user = user_access.readStudent(id)
-    user_access.close_connection()
     if user is None:
         return make_response(jsonify({"err": "User not found"}), 404)
     return make_response(jsonify(user), 200)
@@ -75,7 +71,6 @@ def get_student(id):
 def get_admin(id):
     user_access = Users()
     user = user_access.readAdmin(id)
-    user_access.close_connection()
     if user is None:
         return make_response(jsonify({"err": "User not found"}), 404)
     return make_response(jsonify(user), 200)
@@ -83,38 +78,34 @@ def get_admin(id):
 # UPDATE
 @app_users_routes.route('/classTrack/user/update/<int:id>', methods=['PUT'])
 def update_user(id):
-
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id() != id and not admin:
+    if s['user_id'] != id and not admin:
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
-    data = request.get_json()
     user_access = Users()
-    if user_access.readAdmin(id) is None and user_access.readStudent(id):
-        user_access.close_connection()
+    if user_access.readAdmin(id) is None and user_access.readStudent(id) is None:
         return make_response(jsonify({"err": "User not found"}), 404)
     updated_user = user_access.update(
         id, data["isAdmin"], data["variant_id"], data["first_name"], data["last_name"], data["email"], data["password"])
-    user_access.close_connection()
     return make_response(jsonify({"user_id": updated_user}), 200)
 
 # DELETE
 @app_users_routes.route('/classTrack/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    if s.user_id != id and not admin:  # honestly I cannot believe this uses "and" and "not" instead of && and !
+    if s['user_id'] != id and not admin:  # honestly I cannot believe this uses "and" and "not" instead of && and !
         return make_response(jsonify({"err": "Session is not tied to this user"}), 403)
 
     user_access = Users()
-    if user_access.readAdmin(id) is None and user_access.readStudent(id):
-        user_access.close_connection()
+    if user_access.readAdmin(id) is None and user_access.readStudent(id) is None:
         return make_response(jsonify({"err": "User not found"}), 404)
     deleted_user = user_access.delete(id)
-    user_access.close_connection()
     return make_response(jsonify({"user_id": deleted_user}), 200)        

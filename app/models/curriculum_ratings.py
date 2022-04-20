@@ -1,18 +1,12 @@
 from dotenv import load_dotenv
-import os
-import psycopg2
 from psycopg2.extras import RealDictCursor
+from app.dbconnection import dbconnection
 
 load_dotenv()
 
 class Curriculum_Ratings:
     def __init__(self):
-        self.connection = psycopg2.connect(
-            host='ec2-34-231-183-74.compute-1.amazonaws.com',
-            database='ddetn88o84e93n',
-            user='oisewifxugdivf',
-            password='155a4e05bef9407085766f6326277a143b1aa857ed8210c48a4f4517947dd563'
-        )
+        self.connection = dbconnection().connection()
 
     def create(self, user_id, curriculum_id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -45,13 +39,13 @@ class Curriculum_Ratings:
                 rating = None
             return rating
 
-    def update(self, id, user_id, curriculum_id, rating):
+    def update(self, id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "UPDATE curriculum_ratings"
-                " SET user_id=%(user_id)s, curriculum_id=%(curriculum_id)s, rating=%(rating)s"
+                " SET rating=%(rating)s"
                 " WHERE rating_id=%(rating_id)s ",
-                {"rating_id": id, "user_id": user_id, "curriculum_id": curriculum_id, "rating": rating})
+                {"rating_id": id, "rating": rating})
             self.connection.commit()
             return id
 
@@ -61,7 +55,3 @@ class Curriculum_Ratings:
                 "DELETE FROM curriculum_ratings WHERE rating_id=%(rating_id)s", {"rating_id": id})
             self.connection.commit()
             return id
-
-    # Clean-Up
-    def close_connection(self):
-        self.connection.close()

@@ -9,19 +9,17 @@ app_history_routes = Blueprint('history_routes', __name__)
 # CREATE History
 @app_history_routes.route('/classTrack/history', methods=['POST'])
 def create_history():
-    s = SManager.get_tied_user(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, _ = SManager.get_tied_user(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    data = request.get_json()
-
-    if s.user_id != data["user_id"]:
+    if s['user_id'] != data["user_id"]:
         return make_response(jsonify({"err": "Session and Data userID mismatch"}), 403)
 
     history_access = History()
     history_id = history_access.create(
         data["user_id"], data["curriculum_id"])
-    history_access.close_connection()
     return make_response(jsonify(history_id), 200)
 
 # READ ALL
@@ -29,7 +27,6 @@ def create_history():
 def get_all_histories():
     history_access = History()
     history = history_access.read_all()
-    history_access.close_connection()
     return make_response(jsonify(history), 200)
 
 # READ BY ID
@@ -39,29 +36,15 @@ def get_history(id):
     # TODO for a specific person
     history_access = History()
     history = history_access.read(id)
-    history_access.close_connection()
     if history is None:
         return make_response(jsonify({"err": "History not found"}), 404)
     return make_response(jsonify(history), 200)
 
-# UPDATE
-@app_history_routes.route('/classTrack/history/update/<int:id>', methods=['PUT'])
-def update_history(id):
-    # TODO REMOVE THIS
-    data = request.get_json()
-    history_access = History()
-    if history_access.read(id) is None:
-        history_access.close_connection()
-        return make_response(jsonify({"err": "History not found"}), 404)
-    updated_history = history_access.update(
-        id, data["user_id"], data["curriculum_id"])
-    history_access.close_connection()
-    return make_response(jsonify({"history_id": updated_history}), 200)
-
 # DELETE
 @app_history_routes.route('/classTrack/history/delete/<int:id>', methods=['POST'])
 def delete_history(id):
-    s, admin = SManager.get_tied_student_or_admin(request.headers.get("SessionID"))
+    data = request.get_json()
+    s, admin = SManager.get_tied_student_or_admin(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
@@ -69,13 +52,10 @@ def delete_history(id):
     h = history_access.read(id)
 
     if h is None:
-        history_access.close_connection()
         return make_response(jsonify({"err": "History not found"}), 404)
 
-    if h.user_id != s.user_id and not admin:
-        history_access.close_connection()
+    if h['user_id'] != s['user_id'] and not admin:
         return make_response(jsonify({"err": "Session does not own this history item"}), 403)
 
     deleted_history = history_access.delete(id)
-    history_access.close_connection()
     return make_response(jsonify({"history_id": deleted_history}), 200)        
