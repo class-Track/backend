@@ -43,7 +43,7 @@ class SessionManager:
 
         if session_id not in self.__sessions__.keys():
             print("Could not find the session in the keys")
-            print("There are " + len(self.__sessions__) + " key(s)")
+            print("There are " + str(len(self.__sessions__)) + " key(s)")
             return None  # If it doesn't exist, get the heck out
 
         if self.__sessions__[session_id].is_expired():
