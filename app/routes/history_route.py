@@ -20,7 +20,6 @@ def create_history():
     history_access = History()
     history_id = history_access.create(
         data["user_id"], data["curriculum_id"])
-    history_access.close_connection()
     return make_response(jsonify(history_id), 200)
 
 # READ ALL
@@ -28,7 +27,6 @@ def create_history():
 def get_all_histories():
     history_access = History()
     history = history_access.read_all()
-    history_access.close_connection()
     return make_response(jsonify(history), 200)
 
 # READ BY ID
@@ -38,7 +36,6 @@ def get_history(id):
     # TODO for a specific person
     history_access = History()
     history = history_access.read(id)
-    history_access.close_connection()
     if history is None:
         return make_response(jsonify({"err": "History not found"}), 404)
     return make_response(jsonify(history), 200)
@@ -55,13 +52,10 @@ def delete_history(id):
     h = history_access.read(id)
 
     if h is None:
-        history_access.close_connection()
         return make_response(jsonify({"err": "History not found"}), 404)
 
     if h['user_id'] != s['user_id'] and not admin:
-        history_access.close_connection()
         return make_response(jsonify({"err": "Session does not own this history item"}), 403)
 
     deleted_history = history_access.delete(id)
-    history_access.close_connection()
     return make_response(jsonify({"history_id": deleted_history}), 200)        

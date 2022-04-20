@@ -23,7 +23,6 @@ def create_department():
     department_access = Departments()
     department_id = department_access.create(
         data["university_id"], data["name"], data["classification"])
-    department_access.close_connection()
     return make_response(jsonify(department_id), 200)
 
 # READ ALL
@@ -31,7 +30,6 @@ def create_department():
 def get_all_departments():
     department_access = Departments()
     departments = department_access.read_all()
-    department_access.close_connection()
     return make_response(jsonify(departments), 200)
 
 # READ BY ID
@@ -39,7 +37,6 @@ def get_all_departments():
 def get_department(id):
     department_access = Departments()
     department = department_access.read(id)
-    department_access.close_connection()
     if department is None:
         return make_response(jsonify({"err": "Department not found"}), 404)
     return make_response(jsonify(department), 200)
@@ -60,11 +57,9 @@ def update_department(id):
 
     department_access = Departments()
     if department_access.read(id) is None:
-        department_access.close_connection()
         return make_response(jsonify({"err": "Department not found"}), 404)
     updated_department = department_access.update(
-        id, data["university_id"], data["name"], data["classification"])  # Allowing users to change the university of
-    department_access.close_connection()                                  # a department can be detrimental, and pose
+        id, data["university_id"], data["name"], data["classification"])  # Allowing users to change the university of a department can be detrimental, and pose
     return make_response(jsonify({"department_id": updated_department}), 200)  # A light security risk!
 
 # DELETE
@@ -83,13 +78,10 @@ def delete_department(id):
     d = department_access.read(id)
 
     if d is None:
-        department_access.close_connection()
         return make_response(jsonify({"err": "Department not found"}), 404)
 
     if d['university_id'] != s['university_id']:
-        department_access.close_connection()
         return make_response(jsonify({"err": "User does not administrate this university"}), 404)
 
     deleted_department = department_access.delete(id)
-    department_access.close_connection()
     return make_response(jsonify({"department_id": deleted_department}), 200)
