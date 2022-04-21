@@ -30,3 +30,16 @@ def create_custom_curriculum():
     curr = dao.create_custom_curr(graph)
 
     return jsonify(curr)
+
+
+@app_curr_graph_routes.route('/curr', methods=['GET'])
+def get_curriculum():
+    data = request.get_json()
+
+    currName = data['name']
+
+    dao = CurruculumGraph(current_app.driver)
+
+    curr = dao.get_curriculum(currName)
+
+    return jsonify(curr)

@@ -78,3 +78,54 @@ class CurruculumGraph:
         with self.driver.session() as session:
             record = session.write_transaction(create_curriculum, graph=graph)
             return { "id": record["c"].id }
+
+
+    """
+    Get years from a curriculum 
+    """
+    def get_curriculum(self, currName):
+        # Save curriculum in database
+        def get_semesters(tx, currName):
+            result = tx.run("""
+                MATCH (curr:Curriculum { name: $currName})<-[:FROM_CURRICULUM]-(sem)
+                RETURN DISTINCT sem
+            """, currName=currName)
+
+            res = {"years": []}
+            for row in result:
+                year = str(row[0].get("year"))
+                semesterId = row[0].get("id")
+                if year in res:
+                    res[year]["semesters_ids"].append(semesterId)
+                else:
+                    res["years"].append(year)
+                    res[year] = { "id": "year_{}".format(year),
+                                  "name": "Year {}".format(year),
+                                  "semesters_ids": [semesterId] }
+
+                res[semesterId] = get_courses(tx, semesterId, row[0].get("name") )
+                    
+            return res
+
+        def get_courses(tx, semesterId, semName):
+            result = tx.run("""
+                MATCH (sem:Semester { id:$semesterId})<-[:FROM_SEMESTER]-(course)
+                RETURN DISTINCT course
+            """, semesterId=semesterId)
+
+            res = { "id": semesterId,
+                    "name": semName,
+                    "courses": []
+                    }
+            for row in result:
+                res["courses"].append({
+                    "id": row[0].get("id"),
+                    "name": row[0].get("name"),
+                    "code": row[0].get("code")
+                })
+
+            return res
+
+        with self.driver.session() as session:
+            semesters = session.write_transaction(get_semesters, currName=currName)
+            return semesters
