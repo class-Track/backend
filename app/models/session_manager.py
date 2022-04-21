@@ -54,11 +54,9 @@ class SessionManager:
         if s is None:
             return None, None
 
-        # TODO HEY REMEMBER TO UPDATE THIS WHEN WE UPDATE THE MODELS
         u = Users()
         session_user_as_student = u.readStudent(s.user_id())
         session_user_as_admin = u.readAdmin(s.user_id())
-        u.close_connection()
 
         # We now return this as this
         if session_user_as_admin is None:
@@ -78,11 +76,9 @@ class SessionManager:
         if s is None:
             return None, None
 
-        # TODO HEY REMEMBER TO UPDATE THIS WHEN WE UPDATE THE MODELS
         u = Users()
         session_user_as_student = u.readStudent(s.user_id())
         session_user_as_admin = u.readAdmin(s.user_id())
-        u.close_connection()
 
         # We now return this as this
 

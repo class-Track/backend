@@ -20,7 +20,6 @@ def create_university():
     university_access = Universities()
     university_id = university_access.create(
         data["name"], data["codification"], data["state"], data["country"])
-    university_access.close_connection()
     return make_response(jsonify(university_id), 200)
 
 # READ ALL
@@ -28,7 +27,6 @@ def create_university():
 def get_all_universities():
     university_access = Universities()
     universities = university_access.read_all()
-    university_access.close_connection()
     return make_response(jsonify(universities), 200)
 
 # READ BY ID
@@ -36,7 +34,6 @@ def get_all_universities():
 def get_university(id):
     university_access = Universities()
     university = university_access.read(id)
-    university_access.close_connection()
     if university is None:
         return make_response(jsonify({"err": "University not found"}), 404)
     return make_response(jsonify(university), 200)
@@ -57,11 +54,9 @@ def update_university(id):
 
     university_access = Universities()
     if university_access.read(id) is None:
-        university_access.close_connection()
         return make_response(jsonify({"err": "University not found"}), 404)
     updated_university = university_access.update(
         id, data["name"], data["codification"], data["state"], data["country"])
-    university_access.close_connection()
     return make_response(jsonify({"university_id": updated_university}), 200)        
 
 # DELETE
@@ -77,8 +72,6 @@ def delete_university(id):
 
     university_access = Universities()
     if university_access.read(id) is None:
-        university_access.close_connection()
         return make_response(jsonify({"err": "University not found"}), 404)
     deleted_university = university_access.delete(id)
-    university_access.close_connection()
     return make_response(jsonify({"university_id": deleted_university}), 200)        
