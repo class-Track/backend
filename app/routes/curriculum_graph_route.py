@@ -34,9 +34,7 @@ def create_custom_curriculum():
 
 @app_curr_graph_routes.route('/curr', methods=['GET'])
 def get_curriculum():
-    data = request.get_json()
-
-    currName = data['name']
+    currName = request.args.get("name")
 
     dao = CurruculumGraph(current_app.driver)
 
