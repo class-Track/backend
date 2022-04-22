@@ -86,25 +86,28 @@ class CurruculumGraph:
     def get_curriculum(self, id):
         # Save curriculum in database
         def get_semesters(tx, id):
-            result = tx.run("""
+            result = list(tx.run("""
                 MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem)
                 RETURN DISTINCT sem
-            """, id=id)
+            """, id=id))
 
-            res = {"years": []}
-            for row in result:
-                year = str(row[0].get("year"))
-                semesterId = row[0].get("id")
-                if year in res:
-                    res[year]["semesters_ids"].append(semesterId)
-                else:
-                    res["years"].append(year)
-                    res[year] = { "id": "year_{}".format(year),
-                                  "name": "Year {}".format(year),
-                                  "semesters_ids": [semesterId] }
+            if len(result) == 0:
+                res = None
+            else:
+                res = {"years": []}
+                for row in result:
+                    year = str(row[0].get("year"))
+                    semesterId = row[0].get("id")
+                    if year in res:
+                        res[year]["semesters_ids"].append(semesterId)
+                    else:
+                        res["years"].append(year)
+                        res[year] = { "id": "year_{}".format(year),
+                                    "name": "Year {}".format(year),
+                                    "semesters_ids": [semesterId] }
 
-                res[semesterId] = get_courses(tx, semesterId, row[0].get("name") )
-                    
+                    res[semesterId] = get_courses(tx, semesterId, row[0].get("name") )
+                        
             return res
 
         def get_courses(tx, semesterId, semName):

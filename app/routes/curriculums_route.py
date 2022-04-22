@@ -28,8 +28,10 @@ def create_curriculum():
         data["name"], data["deptCode"], data["user_id"], data["department_id"]).get("curriculum_id")
 
     graph[0]["id"] = str(curriculum_id)
-    print(graph[0])
-    print(graph[0].get("id"))
+    graph[0]["name"] = data["name"]
+    graph[0]["program"] = data["deptCode"]
+    graph[0]["user"] = data["user_id"]
+
     createdCurr = create_curriculum_graph(graph, co_reqs, pre_reqs)
 
     if(createdCurr is None):

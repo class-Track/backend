@@ -13,7 +13,10 @@ def get_curriculum():
 
     curr = dao.get_curriculum(id)
 
-    return jsonify(curr)
+    if not curr:
+         return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
+
+    return make_response(jsonify(curr), 200)
 
 
 # OBSOLETE ROUTES
