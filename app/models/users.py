@@ -69,7 +69,7 @@ class Users:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT first_name, last_name, email FROM users")
+                "SELECT user_id, first_name, last_name, email FROM users")
             self.connection.commit()
             users = cursor.fetchall()
             return users

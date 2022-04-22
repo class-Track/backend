@@ -52,6 +52,18 @@ class Curriculums:
             except TypeError:
                 curriculum = None
             return curriculum
+    
+    def get_curriculum_by_user(self, user_id):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT name, curriculum_id, department_id, rating FROM curriculums WHERE user_id=%(user_id)s",
+                            {"user_id":user_id}
+            )
+            self.connection.commit()
+            try:
+                curriculums = cursor.fetchall()
+            except TypeError:
+                curriculums = None
+            return curriculums
 
     def update_rating(self, id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:

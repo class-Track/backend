@@ -15,7 +15,7 @@ class CurruculumGraph:
         def create_curriculum(tx, graph, co_reqs, pre_reqs):
             return tx.run("""
                 UNWIND $graph AS curr
-                MERGE (c:Curriculum { name: curr.name,  program: curr.program, user: curr.user} )
+                MERGE (c:Curriculum { id: curr.id, name: curr.name, program: curr.program, user: curr.user} )
                 
                 WITH c
                 
@@ -59,7 +59,7 @@ class CurruculumGraph:
         def create_curriculum(tx, graph):
             return tx.run("""
                 UNWIND $graph AS curr
-                MERGE (c:Curriculum { name: curr.name,  program: curr.program, user: curr.user} )
+                MERGE (c:Curriculum { id: curr.id, name: curr.name,  program: curr.program, user: curr.user} )
                 
                 WITH c
                 
@@ -83,13 +83,13 @@ class CurruculumGraph:
     """
     Get years from a curriculum 
     """
-    def get_curriculum(self, currName):
+    def get_curriculum(self, id):
         # Save curriculum in database
-        def get_semesters(tx, currName):
+        def get_semesters(tx, id):
             result = tx.run("""
-                MATCH (curr:Curriculum { name: $currName})<-[:FROM_CURRICULUM]-(sem)
+                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem)
                 RETURN DISTINCT sem
-            """, currName=currName)
+            """, id=id)
 
             res = {"years": []}
             for row in result:
@@ -127,5 +127,5 @@ class CurruculumGraph:
             return res
 
         with self.driver.session() as session:
-            semesters = session.write_transaction(get_semesters, currName=currName)
+            semesters = session.write_transaction(get_semesters, id=id)
             return semesters
