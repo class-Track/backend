@@ -22,10 +22,14 @@ def create_curriculum():
     co_reqs = data['co_reqs'] if 'co_reqs' in data else None
     pre_reqs = data['pre_reqs'] if 'pre_reqs' in data else None
 
+    sem = graph[0].get("semesters")
+    courses = 0
+    for s in sem:
+        courses+= len(s.get("courses")) if s.get("courses") else 0
+
     curriculum_access = Curriculums()
 
-    curriculum_id = curriculum_access.create(
-        data["name"], data["deptCode"], data["user_id"], data["department_id"]).get("curriculum_id")
+    curriculum_id = curriculum_access.create(data["name"], data["deptCode"], data["user_id"], data["department_id"], len(sem), courses).get("curriculum_id")
 
     graph[0]["id"] = str(curriculum_id)
     graph[0]["name"] = data["name"]
@@ -72,6 +76,17 @@ def get_curriculum_by_user(id):
     if curriculum is None:
         return make_response(jsonify({"err": "User has no curriculums"}), 404)
     return make_response(jsonify(curriculum), 200)
+
+# READ TOP 10 BY DEPARTMENT
+@app_curriculum_routes.route('/classTrack/curriculum/top_dept', methods=['GET'])
+def get_departments_most_visited():
+    id = request.args.get("id")
+    curriculum_access = Curriculums()
+    curriculum = curriculum_access.get_departments_most_visited(id)
+    if curriculum is None:
+        return make_response(jsonify({"err": "There are no top curriculums"}), 404)
+    return make_response(jsonify(curriculum), 200)
+
 
 # UPDATE
 @app_curriculum_routes.route('/classTrack/curriculum/update/<string:id>', methods=['PUT'])
