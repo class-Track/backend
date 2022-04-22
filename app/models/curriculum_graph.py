@@ -91,7 +91,7 @@ class CurruculumGraph:
                 RETURN DISTINCT sem
             """, id=id))
 
-            if len(result) == 0:
+            if not result:
                 res = None
             else:
                 res = {"years": []}
