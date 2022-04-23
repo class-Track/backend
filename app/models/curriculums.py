@@ -87,6 +87,27 @@ class Curriculums:
                 curriculums = None
             return curriculums
 
+    def get_degree_top_rated(self, degree_id):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                            SELECT  cu.curriculum_id, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count FROM curriculums cu
+                            INNER JOIN departments d ON d.department_id = cu.department_id
+                            INNER JOIN degrees de ON de.department_id = d.department_id
+                            INNER JOIN users u ON u.user_id = cu.user_id
+                            WHERE de.degree_id = %(degree_id)s
+                            GROUP BY cu.curriculum_id, cu.name, de.credits, u.first_name, u.last_name, de.name, cu.rating, de.length, cu.semesters, cu.course_count
+                            ORDER BY rating DESC
+                            LIMIT 9;
+                            """,
+                            {"degree_id":degree_id}
+            )
+            self.connection.commit()
+            try:
+                curriculums = cursor.fetchall()
+            except TypeError:
+                curriculums = None
+            return curriculums
+
     def update_rating(self, id, rating):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
