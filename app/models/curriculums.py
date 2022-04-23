@@ -65,7 +65,7 @@ class Curriculums:
                 curriculums = None
             return curriculums
 
-    def get_departments_most_visited(self, degree_id):
+    def get_degree_most_visited(self, degree_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
                             SELECT  h.curriculum_id, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, COUNT(*) AS times_visited FROM history h

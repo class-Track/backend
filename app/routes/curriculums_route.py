@@ -77,12 +77,12 @@ def get_curriculum_by_user(id):
         return make_response(jsonify({"err": "User has no curriculums"}), 404)
     return make_response(jsonify(curriculum), 200)
 
-# READ TOP 10 BY DEPARTMENT
-@app_curriculum_routes.route('/classTrack/curriculum/top_dept', methods=['GET'])
-def get_departments_most_visited():
+# READ TOP 10 BY DEGREE
+@app_curriculum_routes.route('/classTrack/curriculum/top_degree', methods=['GET'])
+def get_degree_most_visited():
     id = request.args.get("id")
     curriculum_access = Curriculums()
-    curriculum = curriculum_access.get_departments_most_visited(id)
+    curriculum = curriculum_access.get_degree_most_visited(id)
     if curriculum is None:
         return make_response(jsonify({"err": "There are no top curriculums"}), 404)
     return make_response(jsonify(curriculum), 200)
