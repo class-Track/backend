@@ -1,5 +1,6 @@
 import json
 import pytest
+from requests import session
 from app.main import create_app
 
 course = {
@@ -33,13 +34,15 @@ def client(app):
 def runner(app):
     return app.test_cli_runner()
 
-
-def test_course_routes(client):
-    # Login to admin account
+@pytest.fixture
+def sessionID(client):
     admin = client.post('classTrack/login', json=admin_account)
     assert type(admin.get_data()) == bytes
 
-    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
+    return admin.get_data().strip().decode("utf-8").replace('"', "")
+
+def test_course_routes(client, sessionID):
+    course['session_id'] = sessionID
 
     # Create course
     response = client.post('classTrack/course', json=course)
@@ -58,7 +61,7 @@ def test_course_routes(client):
         response.get_data().strip().decode("utf-8")) == course
 
     # Update course
-    course['session_id'] = admin.get_data().strip().decode("utf-8").replace('"', "")
+    course['session_id'] = sessionID
     course["name"] = "Databases2"
     course["classification"] = "CIIC-5060"
 
@@ -69,34 +72,3 @@ def test_course_routes(client):
     # Delete course
     response = client.post('classTrack/course/delete/' + str(course_id), json=course)
     assert response.status_code == 200 and type(course_id) == int
-
-
-# def test_get_all_courses(client):
-#     response = client.get('classTrack/courses')
-#     assert response.status_code == 200
-
-
-# def test_update_course(client):
-#     course = {
-#         "course_id": 4,
-#         "department_id": 2,
-#         "name": "Databases2",
-#         "classification": "CIIC-5060"
-#     }
-
-#     # Login to admin account
-#     admin = client.post('classTrack/login', json=admin_account)
-#     assert type(admin.get_data()) == bytes
-
-#     headers = {
-#         'SessionID': admin.get_data().strip().decode("utf-8").replace('"', "")
-#     }
-
-#     # Update course
-#     response = client.put('classTrack/course/update/4',
-#                           json=course, headers=headers)
-#     assert response.status_code == 200
-
-# def test_delete_course(client):
-#     response = client.post('classTrack/course/delete/4')
-#     assert response.status_code == 200

@@ -16,3 +16,4 @@ build/
 /.vs
 conf/db_access.env
 .vscode/settings.json
+expressions.txt
