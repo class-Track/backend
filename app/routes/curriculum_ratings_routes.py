@@ -20,7 +20,6 @@ def create_curriculum_rating():
     curriculum_rating_access = Curriculum_Ratings()
     curriculum_rating_id = curriculum_rating_access.create(
         data["user_id"], data["curriculum_id"], data["rating"])
-    curriculum_rating_access.close_connection()
     return make_response(jsonify(curriculum_rating_id), 200)
 
 # READ ALL
@@ -28,7 +27,6 @@ def create_curriculum_rating():
 def get_all_curriculum_ratings():
     curriculum_rating_access = Curriculum_Ratings()
     curriculum_ratings = curriculum_rating_access.read_all()
-    curriculum_rating_access.close_connection()
     return make_response(jsonify(curriculum_ratings), 200)
 
 # READ BY ID
@@ -36,7 +34,6 @@ def get_all_curriculum_ratings():
 def get_curriculum_rating(id):
     curriculum_rating_access = Curriculum_Ratings()
     curriculum_rating = curriculum_rating_access.read(id)
-    curriculum_rating_access.close_connection()
     if curriculum_rating is None:
         return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
     return make_response(jsonify(curriculum_rating), 200)
@@ -54,11 +51,9 @@ def update_curriculum_rating(id):
 
     curriculum_rating_access = Curriculum_Ratings()
     if curriculum_rating_access.read(id) is None:
-        curriculum_rating_access.close_connection()
         return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
     updated_curriculum_rating = curriculum_rating_access.update(
         id, data["rating"])
-    curriculum_rating_access.close_connection()
     return make_response(jsonify({"rating_id": updated_curriculum_rating}), 200)
 
 # DELETE
@@ -74,13 +69,10 @@ def delete_curriculum_rating(id):
     c = curriculum_rating_access.read(id)
 
     if c is None:
-        curriculum_rating_access.close_connection()
         return make_response(jsonify({"err": "Curriculum rating not found"}), 404)
 
     if c['user_id'] != s['user_id']:
-        curriculum_rating_access.close_connection()
         return make_response(jsonify({"err": "Session does not own this curriculum rating"}), 401)
 
     deleted_curriculum_rating = curriculum_rating_access.delete(id)
-    curriculum_rating_access.close_connection()
     return make_response(jsonify({"rating_id": deleted_curriculum_rating}), 200)

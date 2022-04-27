@@ -29,7 +29,6 @@ def create_degree():
     degree_access = Degrees()
     degree_id = degree_access.create(
        data["name"], data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
-    degree_access.close_connection()
     return make_response(jsonify(degree_id), 200)
 
 # READ ALL
@@ -37,7 +36,6 @@ def create_degree():
 def get_all_degrees():
     degree_access = Degrees()
     degrees = degree_access.read_all()
-    degree_access.close_connection()
     return make_response(jsonify(degrees), 200)
 
 # READ ALL
@@ -45,7 +43,6 @@ def get_all_degrees():
 def get_all_degrees_with_dept():
     degree_access = Degrees()
     degrees = degree_access.read_all_with_dept()
-    degree_access.close_connection()
     return make_response(jsonify(degrees), 200)
 
 # READ BY ID
@@ -53,7 +50,6 @@ def get_all_degrees_with_dept():
 def get_degree(id):
     degree_access = Degrees()
     degree = degree_access.read(id)
-    degree_access.close_connection()
     if degree is None:
         return make_response(jsonify({"err": "Degree not found"}), 404)
     return make_response(jsonify(degree), 200)
@@ -79,11 +75,9 @@ def update_degree(id):
 
     degree_access = Degrees()
     if degree_access.read(id) is None:
-        degree_access.close_connection()
         return make_response(jsonify({"err": "Degree not found"}), 404)
     updated_degree = degree_access.update(
         id, data["name"], data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
-    degree_access.close_connection()
     return make_response(jsonify({"degree_id": updated_degree}), 200)
 
 # DELETE
@@ -102,21 +96,17 @@ def delete_degree(id):
     deg = degree_access.read(id)
 
     if deg is None:
-        degree_access.close_connection()
         return make_response(jsonify({"err": "Degree not found"}), 404)
 
     # We can assume the department for this degree exists as its a foreign key
     if __get_department__(deg['department_id'])['university_id'] != s['university_id']:
-        degree_access.close_connection()
         return make_response(jsonify({"err": "University is not administered by this user"}), 404)
 
     deleted_degree = degree_access.delete(id)
-    degree_access.close_connection()
     return make_response(jsonify({"degree_id": deleted_degree}), 200)
 
 
 def __get_department__(id):  # TODO: Eventually remove this
     departments_access = Departments()
     d = departments_access.read(id)
-    departments_access.close_connection()
     return d

@@ -3,6 +3,7 @@ import psycopg2
 import gunicorn
 
 from flask import Flask
+from .neo4j import init_driver
 
 def create_app(test_config=None):
     from app.routes.universities_routes import app_universities_routes
@@ -13,10 +14,25 @@ def create_app(test_config=None):
     from app.routes.history_route import app_history_routes
     from app.routes.curriculums_route import app_curriculum_routes
     from app.routes.courses_route import app_course_routes
+    from app.routes.curriculum_graph_route import app_curr_graph_routes
     from flask_cors import CORS, cross_origin
 
     app = Flask(__name__)
     CORS(app)
+
+    app.config.from_mapping(
+        NEO4J_URI=os.getenv('NEO4J_URI'),
+        NEO4J_USERNAME=os.getenv('NEO4J_USERNAME'),
+        NEO4J_PASSWORD=os.getenv('NEO4J_PASSWORD'),
+        NEO4J_DATABASE=os.getenv('NEO4J_DATABASE'),
+    )
+
+    with app.app_context():
+        init_driver(
+            app.config.get('NEO4J_URI'),
+            app.config.get('NEO4J_USERNAME'),
+            app.config.get('NEO4J_PASSWORD'),
+        )
 
     app.register_blueprint(app_universities_routes)
     app.register_blueprint(app_degrees_routes)
@@ -26,6 +42,7 @@ def create_app(test_config=None):
     app.register_blueprint(app_history_routes)
     app.register_blueprint(app_curriculum_routes)
     app.register_blueprint(app_course_routes)
+    app.register_blueprint(app_curr_graph_routes)
 
     @app.route('/')
     def hello():
@@ -68,4 +85,3 @@ def create_app(test_config=None):
                 return  message
 
     return app
-
