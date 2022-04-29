@@ -3,7 +3,7 @@ import pytest
 from app.main import create_app
 
 history = {
-    "curriculum_id": "CIIC_57_V1",
+    "curriculum_id": "CIIC_123_V1",
 }
 
 # Admin account credentials
@@ -38,12 +38,17 @@ def sessionID(client):
 
     return user.get_data().strip().decode("utf-8").replace('"', "")
 
-
-def test_history_routes(client, sessionID):
-    history['session_id'] = sessionID
-
+@pytest.fixture
+def user_id(client, sessionID):
+    # Get user id dynamically
     response = client.post('classTrack/me', json={'session_id': sessionID})
-    user_id = json.loads(response.get_data().strip().decode("utf-8"))['user_id']
+    user_id = json.loads(
+        response.get_data().strip().decode("utf-8"))['user_id']
+    return user_id
+
+
+def test_history_routes(client, sessionID, user_id):
+    history['session_id'] = sessionID
     history['user_id'] = user_id
 
     # Create history

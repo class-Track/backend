@@ -31,15 +31,15 @@ def runner(app):
     return app.test_cli_runner()
 
 
-# @pytest.fixture
-# def login_user(client):
-#     login = client.post('classTrack/login', json=test_user)
-#     assert type(login.get_data()) == bytes
+@pytest.fixture
+def login_user(client):
+    login = client.post('classTrack/login', json=test_user)
+    assert type(login.get_data()) == bytes
 
-#     # Removing new lines from Session ID and decoding so it could be json compatible
-#     user_sessionID = login.get_data().strip().decode("utf-8").replace('"', "")
+    # Removing new lines from Session ID and decoding so it could be json compatible
+    user_sessionID = login.get_data().strip().decode("utf-8").replace('"', "")
 
-#     yield user_sessionID
+    return user_sessionID
 
 
 # @pytest.fixture
@@ -125,12 +125,9 @@ def test_get_all_users(client):
     response = client.get('classTrack/users')
     assert response.status_code == 200
 
-def test_logout_user(client):
-    login = client.post('classTrack/login', json=test_user)
-    assert type(login.get_data()) == bytes
-
+def test_logout_user(client, login_user):
     # Removing new lines from Session ID and decoding so it could be json compatible
-    user_sessionID = login.get_data().strip().decode("utf-8").replace('"', "")
+    user_sessionID = login_user
 
     response = client.post('classTrack/logout',
                            json={"session_id": user_sessionID})

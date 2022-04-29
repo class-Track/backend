@@ -38,14 +38,19 @@ def login(client):
 
     return sessionID
 
-
-def test_create_curriculum_rating(client, login):
+@pytest.fixture
+def user_id(client, login):
+    # Get user id dynamically
     response = client.post('classTrack/me', json={'session_id': login})
-    user_id = json.loads(response.get_data().strip().decode("utf-8"))['user_id']
+    user_id = json.loads(
+        response.get_data().strip().decode("utf-8"))['user_id']
+    return user_id
 
+
+def test_create_curriculum_rating(client, login, user_id):
     rating = {
         'user_id': user_id,
-        'curriculum_id': 'CIIC_57_V1',
+        'curriculum_id': 'CIIC_123_V1',
         'rating': 4,
         'session_id': login
     }

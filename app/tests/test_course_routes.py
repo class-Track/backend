@@ -1,6 +1,5 @@
 import json
 import pytest
-from requests import session
 from app.main import create_app
 
 course = {

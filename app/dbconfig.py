@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+
 # The format this thing is looking for. Remember this is what DATABASE_URL has on Heroku
 # postgres://USER:PASSWORD@HOST:PORT/DB_NAME
 
