@@ -9,16 +9,26 @@ class Degrees:
         self.connection = dbconnection().connection()
 
 
-    def create(self, name, department_id, curriculum_sequence, length, credits):
+    def create(self, name, department_id, length, credits):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "INSERT INTO degrees (name, department_id, curriculum_sequence, length, credits)"
-                " VALUES ( %(name)s, %(department_id)s, %(curriculum_sequence)s, %(length)s, %(credits)s)"
+                " VALUES ( %(name)s, %(department_id)s, null, %(length)s, %(credits)s)"
                 " RETURNING degree_id", {
-                    "name": name, "department_id": department_id, "curriculum_sequence": curriculum_sequence, "length": length, "credits": credits }
+                    "name": name, "department_id": department_id, "length": length, "credits": credits }
             )
             self.connection.commit()
-            degree_id = cursor.fetchone()
+
+            degree_id = cursor.fetchone().get("degree_id")
+            curriculum_sequence = "{}_{}_admin".format(department_id, degree_id)
+
+            cursor.execute(
+                "UPDATE degrees"
+                " SET curriculum_sequence=%(curriculum_sequence)s"
+                " WHERE degree_id=%(degree_id)s ",
+                {"curriculum_sequence": curriculum_sequence, "degree_id": degree_id})
+            self.connection.commit()
+
             return degree_id
 
     def read_all_with_dept(self):
