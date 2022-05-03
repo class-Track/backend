@@ -52,6 +52,28 @@ def login_user(client):
 
 #     yield admin_sessionID
 
+def test_create_account(client):
+     # Create admin account
+    first_name = "Error"
+    last_name = "Account"
+    email = "error@account.com"
+    university_id = 3
+    password = "test"
+
+    data = {
+        "isAdmin": True,
+        "variant_id": university_id,
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "password": password
+    }
+
+    response = client.post('classTrack/user', json=data)
+    admin_id = json.loads(
+        response.get_data().strip().decode("utf-8"))
+
+    assert response.status_code == 200 and type(admin_id) == int
 
 def test_admin_routes(client):
     # Create admin account
