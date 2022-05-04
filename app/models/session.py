@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 class Session:
     """Class for each individual session."""
 
-    id = uuid.uuid4()  # Generates a random UUID when instantiating the Session
+    id = None
     """ID of this session. This is what the frontend receives and uses as a key to do stuff"""
 
     _expiration_date_ = datetime.min # This is
@@ -28,6 +28,7 @@ class Session:
 
     def __init__(self, user_id):
         """Constructor for a session for given user_id"""
+        self.id = uuid.uuid4()  # Generates a random UUID when instantiating the Session
         self._user_id_ = user_id
         self.extend_session()
 
