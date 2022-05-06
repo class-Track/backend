@@ -6,25 +6,12 @@ from app.models.session_manager import SessionManager
 app_curr_graph_routes = Blueprint('curr_graph_routes', __name__, url_prefix="/classTrack")
 SManager = SessionManager()
 
-@app_curr_graph_routes.route('/currGraph', methods=['GET'])
-def get_curriculum():
-    id = request.args.get("id")
-
-    dao = CurruculumGraph(current_app.driver)
-
-    curr = dao.get_curriculum(id)
-
-    if not curr:
-         return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
-
-    return make_response(jsonify(curr), 200)
-
 @app_curr_graph_routes.route('/standard_curriculum', methods=['POST'])
 def create_standard_curriculum():
     data = request.get_json()
     dao = CurruculumGraph(current_app.driver)
     s, admin = SManager.get_tied_user(data["session_id"])
-    
+
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
     if not admin:
@@ -62,3 +49,17 @@ def create_standard_curriculum():
 
     
     return make_response(jsonify(createdCurr), 200)
+
+
+@app_curr_graph_routes.route('/currGraph', methods=['GET'])
+def get_curriculum():
+    id = request.args.get("id")
+
+    dao = CurruculumGraph(current_app.driver)
+
+    curr = dao.get_curriculum(id)
+
+    if not curr:
+         return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
+
+    return make_response(jsonify(curr), 200)

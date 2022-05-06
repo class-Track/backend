@@ -97,12 +97,49 @@ class CurruculumGraph:
             record = session.write_transaction(create_curriculum, graph=graph)
             return { "id": record["c"].id }
 
+    """"
+    Get courses Pre Requisistes
+    """
+    def get_pre_reqs(self, id):
+        # Get pre requisites
+        def get_pre_reqs(tx, id):
+            if id == None:
+                return []
+            result = list(tx.run("""
+                MATCH (c:Course {course_id: $course_id})<-[:PRE_REQUISITE]-(p)
+                RETURN p.course_id AS id, p.classification AS code, p.name AS name
+            """, course_id=int(id)))
+
+            return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
+
+        with self.driver.session() as session:
+            records = session.write_transaction(get_pre_reqs, id=id)
+            return records
+        
+    """"
+    Get courses Co Requisistes
+    """
+    def get_co_reqs(self, id):
+        # Get pre requisites
+        def get_co_reqs(tx, id):
+            if id == None:
+                return []
+            result = list(tx.run("""
+                MATCH (c:Course {course_id: $course_id})<-[:CO_REQUISITE]-(p)
+                RETURN p.course_id AS id, p.classification AS code, p.name AS name
+            """, course_id=int(id)))
+
+            return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
+
+        with self.driver.session() as session:
+            records = session.write_transaction(get_co_reqs, id=id)
+            return records
 
     """
     Get years from a curriculum 
     """
     def get_curriculum(self, id):
-        # Save curriculum in database
+        # Get curriculum from db
         def get_semesters(tx, id):
             result = list(tx.run("""
                 MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem)
