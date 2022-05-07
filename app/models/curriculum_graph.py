@@ -8,45 +8,63 @@ class CurruculumGraph:
         self.driver=driver
 
     """
-    Create a new standard curriculum 
+    Create a new standard curriculum - MODIFIED 
     """
-    def create_standard_curr(self, graph, co_reqs, pre_reqs):
+    def create_standard_curr(self, curr, categories, semesters, prereqs, coreqs):
         # Save curriculum in database
-        def create_curriculum(tx, graph, co_reqs, pre_reqs):
+        def create_curriculum(tx, curr, categories, semesters, prereqs, coreqs):
             return tx.run("""
-                UNWIND $graph AS curr
-                MERGE (c:Curriculum { id: curr.id, name: curr.name, program: curr.program, user: curr.user} )
+                MERGE (c:Curriculum { id: $curr.id, name: $curr.name, program: $curr.program, user: $curr.user, length: $curr.length, credits: $curr.credits })
                 
                 WITH c
                 
-                UNWIND $graph[0].semesters AS sem
+                UNWIND $semesters AS sem
                 MERGE (s:Semester { id: sem.id, name: sem.name, year: sem.year } )
                 MERGE (s)-[:FROM_CURRICULUM]->(c)
-
-                FOREACH (course in sem.courses | 
+                
+                WITH c, sem, s
+                
+                UNWIND sem.courses AS course
+                OPTIONAL MATCH(co:Course {id: course.id})
+                FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
                     CREATE(co:Course) SET co = course
                     MERGE (co)-[:FROM_SEMESTER]->(s)
                 )
 
                 WITH c
 
-                UNWIND $co_reqs AS coreq 
+                UNWIND $categories AS cat
+                MERGE (ca:Category { id: cat.id, name: cat.name } )
+                MERGE (ca)-[:FROM_CURRICULUM]->(c)
+                
+                WITH DISTINCT cat, c, ca
+                
+                UNWIND cat.courses AS course
+                OPTIONAL MATCH (cu:Course {id: course.id})
+                FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
+                    CREATE (co:Course) SET co = course
+                    MERGE (co)-[:FROM_CATEGORY]->(ca)
+                )
+
+                WITH c
+
+                UNWIND $coreqs AS coreq 
                 MATCH (c1:Course) WHERE c1.id = coreq.id
-                MATCH (c2:Course) WHERE c2.id = coreq.co_requisite
+                MATCH (c2:Course) WHERE c2.id = coreq.co_id
                 MERGE (c2)-[:CO_REQUISITE]->(c1)
 
                 WITH c
 
-                UNWIND $pre_reqs AS prereq 
+                UNWIND $prereqs AS prereq 
                 MATCH (c1:Course) WHERE c1.id = prereq.id
-                MATCH (c2:Course) WHERE c2.id = prereq.pre_requisite
+                MATCH (c2:Course) WHERE c2.id = prereq.pre_id
                 MERGE (c2)-[:PRE_REQUISITE]->(c1)
 
                 RETURN c
-            """, graph=graph, co_reqs=co_reqs, pre_reqs=pre_reqs).single()
+            """, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs).single()
 
         with self.driver.session() as session:
-            record = session.write_transaction(create_curriculum, graph=graph, co_reqs=co_reqs, pre_reqs=pre_reqs)
+            record = session.write_transaction(create_curriculum, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs)
             return { "id": record["c"].id }
 
 
@@ -79,12 +97,49 @@ class CurruculumGraph:
             record = session.write_transaction(create_curriculum, graph=graph)
             return { "id": record["c"].id }
 
+    """"
+    Get courses Pre Requisistes
+    """
+    def get_pre_reqs(self, id):
+        # Get pre requisites
+        def get_pre_reqs(tx, id):
+            if id == None:
+                return []
+            result = list(tx.run("""
+                MATCH (c:Course {course_id: $course_id})<-[:PRE_REQUISITE]-(p)
+                RETURN p.course_id AS id, p.classification AS code, p.name AS name
+            """, course_id=int(id)))
+
+            return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
+
+        with self.driver.session() as session:
+            records = session.write_transaction(get_pre_reqs, id=id)
+            return records
+        
+    """"
+    Get courses Co Requisistes
+    """
+    def get_co_reqs(self, id):
+        # Get pre requisites
+        def get_co_reqs(tx, id):
+            if id == None:
+                return []
+            result = list(tx.run("""
+                MATCH (c:Course {course_id: $course_id})<-[:CO_REQUISITE]-(p)
+                RETURN p.course_id AS id, p.classification AS code, p.name AS name
+            """, course_id=int(id)))
+
+            return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
+
+        with self.driver.session() as session:
+            records = session.write_transaction(get_co_reqs, id=id)
+            return records
 
     """
     Get years from a curriculum 
     """
     def get_curriculum(self, id):
-        # Save curriculum in database
+        # Get curriculum from db
         def get_semesters(tx, id):
             result = list(tx.run("""
                 MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem)

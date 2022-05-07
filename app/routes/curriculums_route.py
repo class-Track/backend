@@ -29,7 +29,7 @@ def create_curriculum():
 
     curriculum_access = Curriculums()
 
-    curriculum_id = curriculum_access.create(data["name"], data["deptCode"], data["user_id"], data["department_id"], len(sem), courses).get("curriculum_id")
+    curriculum_id = curriculum_access.create(data["name"], data["deptCode"], data["user_id"], data["degree_id"], len(sem), courses).get("curriculum_id")
 
     graph[0]["id"] = str(curriculum_id)
     graph[0]["name"] = data["name"]
