@@ -14,6 +14,11 @@ admin_account = {
     "password": "admin"
 }
 
+user_account = {
+    "email": "testjulian2@test.com",
+    "password": "test"
+}
+
 
 @pytest.fixture
 def app():
@@ -35,13 +40,22 @@ def runner(app):
 
 
 @pytest.fixture
-def sessionID(client):
+def userSessionID(client):
     admin = client.post('classTrack/login', json=admin_account)
     assert type(admin.get_data()) == bytes
 
     return admin.get_data().strip().decode("utf-8").replace('"', "")
 
-def test_department_routes(client, sessionID):
+@pytest.fixture
+def adminSessionID(client):
+    admin = client.post('classTrack/login', json=user_account)
+    assert type(admin.get_data()) == bytes
+
+    return admin.get_data().strip().decode("utf-8").replace('"', "")
+
+
+def test_department_routes(client, adminSessionID):
+    sessionID = adminSessionID
     # Create Deparment
     department["session_id"] = sessionID
     response = client.post('classTrack/department', json=department)

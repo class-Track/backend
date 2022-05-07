@@ -9,7 +9,7 @@ neo4j_uri = os.getenv('NEO4J_URI')
 neo4j_username = os.getenv('NEO4J_USERNAME')
 neo4j_password = os.getenv('NEO4J_PASSWORD')
 
-load_dotenv('conf/db_access.env')
+load_dotenv('backend/conf/db_access.env')
 puri = os.environ.get('DATABASE_URL', "")
 
 filler, credentials = puri.split("postgres://")
