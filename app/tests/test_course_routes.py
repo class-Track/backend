@@ -72,6 +72,8 @@ def userSessionID(client):
 
     return user.get_data().strip().decode("utf-8").replace('"', "")
 
+# Helper functions to create and delete a course
+
 def create_course(cli, session):
     cse = {
         "department_id": 2,
@@ -97,7 +99,7 @@ def delete_course(client, adminSessionID, course_id):
                            str(course_id), json=course)
     assert response.status_code == 200 and type(course_id) == int
 
-
+# Full process test
 def test_course_routes(client, adminSessionID):
     sessionID = adminSessionID
     course['session_id'] = sessionID
@@ -132,7 +134,7 @@ def test_course_routes(client, adminSessionID):
                            str(course_id), json=course)
     assert response.status_code == 200 and type(course_id) == int
 
-
+# Create course errors
 def test_create_course_user_error(client, userSessionID):
     sessionID = userSessionID
     course['session_id'] = sessionID
@@ -195,7 +197,7 @@ def test_get_course_error(client):
     assert response.status_code == 404 and json.loads(
         response.get_data().strip().decode("utf-8")) == {"err": "Course not found"}
 
-
+# Update course errors
 def test_update_course_user_error(client, userSessionID, adminSessionID):
     course_id = create_course(client, adminSessionID)
 
@@ -206,7 +208,7 @@ def test_update_course_user_error(client, userSessionID, adminSessionID):
 
     response = client.put('classTrack/course/update/' + str(course_id),
                           json=course)
-    error = response.get_data().strip().decode("utf-8")
+    error = json.loads(response.get_data().strip().decode("utf-8"))
 
     assert response.status_code == 403 and error == userM
 
@@ -230,32 +232,37 @@ def test_update_course_invalid_session(client, adminSessionID):
 
 
 def test_update_course_department_notfound(client, adminSessionID):
-    sessionID = adminSessionID
-    course['session_id'] = sessionID
-    course['department_id'] = 3
+    course_id = create_course(client, adminSessionID)
 
-    # Create course
-    response = client.post('classTrack/course', json=course)
+    course['session_id'] = adminSessionID
+    course["name"] = "Databases2"
+    course["classification"] = "CIIC-5060"
+    course["department_id"] = 0
 
-    error = json.loads(
-        response.get_data().strip().decode("utf-8"))
+    response = client.put('classTrack/course/update/' + str(course_id),
+                          json=course)
+    error = json.loads(response.get_data().strip().decode("utf-8"))
 
-    assert response.status_code == 404 and error == {
-        "err": "Department not found"}
+    assert response.status_code == 404 and error == {'err': "Department not found"}
+
+    delete_course(client, adminSessionID, course_id)
 
 
-def test_update_course_university_error(client):
+def test_update_course_university_error(client, adminSessionID):
     # Log in
     account = client.post('classTrack/login', json=error_account)
     sessionID = account.get_data().strip().decode("utf-8").replace('"', "")
+    course_id = create_course(client, adminSessionID)
+    
     course['session_id'] = sessionID
-    course["department_id"] = 2
+    course["name"] = "Databases2"
+    course["classification"] = "CIIC-5060"
 
-    # Create course
-    response = client.post('classTrack/course', json=course)
+    response = client.put('classTrack/course/update/' + str(course_id),
+                          json=course)
+    error = json.loads(response.get_data().strip().decode("utf-8"))
 
-    error = json.loads(
-        response.get_data().strip().decode("utf-8"))
+    assert response.status_code == 404 and error == {"err": "University is not administered by this user"}
 
-    assert response.status_code == 404 and error == {
-        "err": "University is not administered by this user"}
+    delete_course(client, adminSessionID, course_id)
+

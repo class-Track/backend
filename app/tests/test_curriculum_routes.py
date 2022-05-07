@@ -5,7 +5,7 @@ from app.main import create_app
 
 # Global Variables
 test_user = {
-    "email": "test@testjulian.com",
+    "email": "juliantest2@test.com",
     "password": "test"
 }
 
@@ -131,7 +131,7 @@ def user_id(client, sessionID):
 def test_curriculum_routes(client, sessionID):
     response = client.post('classTrack/me', json={'session_id': sessionID})
     user_id = json.loads(
-        response.get_data().strip().decode("utf-8"))['user_id']
+        response.get_data().strip().decode("utf-8"))["user_id"]
 
     curriculum['user_id'] = user_id
     curriculum['session_id'] = sessionID
@@ -141,7 +141,6 @@ def test_curriculum_routes(client, sessionID):
                            json=curriculum)
 
     # response.get_data().strip().decode("utf-8"))['curriculum_id']
-    print(response.get_data().strip().decode("utf-8"))
     curriculum_id = json.loads(response.get_data().strip().decode("utf-8"))
     
     assert response.status_code == 200 and type(curriculum_id) == str
