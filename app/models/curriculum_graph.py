@@ -32,7 +32,9 @@ class CurruculumGraph:
                 )
 
                 WITH c
-
+            """ 
+            + ("""
+                
                 UNWIND $categories AS cat
                 MERGE (ca:Category { id: cat.id, name: cat.name } )
                 MERGE (ca)-[:FROM_CURRICULUM]->(c)
@@ -46,8 +48,10 @@ class CurruculumGraph:
                     MERGE (co)-[:FROM_CATEGORY]->(ca)
                 )
 
-                WITH c
-
+                WITH c 
+            """ if categories else " ")
+            +
+            """
                 UNWIND $coreqs AS coreq 
                 MATCH (c1:Course) WHERE c1.id = coreq.id
                 MATCH (c2:Course) WHERE c2.id = coreq.co_id
@@ -142,7 +146,7 @@ class CurruculumGraph:
         # Get curriculum from db
         def get_semesters(tx, id):
             result = list(tx.run("""
-                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem)
+                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem: Semester)
                 RETURN DISTINCT sem
             """, id=id))
 
@@ -161,7 +165,9 @@ class CurruculumGraph:
                                     "name": "Year {}".format(year),
                                     "semesters_ids": [semesterId] }
 
-                    res[semesterId] = get_courses(tx, semesterId, row[0].get("name") )
+                    res[semesterId] = get_courses(tx, semesterId, row[0].get("name"))
+
+            get_categories(tx, id, res)
                         
             return res
 
@@ -177,13 +183,46 @@ class CurruculumGraph:
                     }
             for row in result:
                 res["courses"].append({
-                    "id": row[0].get("id"),
+                    "id": row[0].get("course_id"),
                     "name": row[0].get("name"),
-                    "code": row[0].get("code")
+                    "code": row[0].get("classification")
                 })
 
             return res
 
+        def get_categories(tx, id, res):
+            result = list(tx.run("""
+                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(cat: Category)
+                RETURN DISTINCT cat.name AS name, cat.id AS id
+            """, id=id))
+
+            if result:
+                res["categories"] = []
+                for row in result:
+                    id = row.get("id")
+                    res["categories"].append(id)
+                    
+                    get_cat_courses(tx, id, res)
+                        
+            return res
+
+        def get_cat_courses(tx, id, res):
+            result = list(tx.run("""
+                MATCH (cat:Category { id:$id})<-[:FROM_CATEGORY]-(c:Course)
+                RETURN DISTINCT c.course_id AS id, c.name AS name, c.classification AS code
+            """, id=id))
+
+            if result:
+                res[id] = []
+                for row in result:
+                    res[id].append({
+                        "id": row.get("id"),
+                        "name": row.get("name"),
+                        "code": row.get("code")
+                    })
+
+            
+
         with self.driver.session() as session:
-            semesters = session.write_transaction(get_semesters, id=id)
-            return semesters
+            curriculum = session.write_transaction(get_semesters, id=id)
+            return curriculum
