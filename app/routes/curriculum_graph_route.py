@@ -43,7 +43,6 @@ def create_standard_curriculum():
             prereqs.append({"id": c["id"], "pre_id": pre["id"]})
         for co in c["coreqs"]:
             coreqs.append({"id": c["id"], "co_id": co["id"]})
-        
 
     createdCurr = dao.create_standard_curr(curriculum, categories, semesters, prereqs, coreqs)
 
