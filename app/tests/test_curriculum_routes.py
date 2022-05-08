@@ -2,6 +2,7 @@ import copy
 import json
 import pytest
 from app.main import create_app
+from app.tests.testVars import *
 
 # Global Variables
 test_user = {
@@ -9,87 +10,9 @@ test_user = {
     "password": "test"
 }
 
-curriculum = {
-    "name": "ESPA v1",
-    "deptCode": "ESPA",
-    "department_id": 2,
-    "graph": [{
-        "semesters": [
-                {   
-                    "id": "ESPA_julian_V1_Fall_1",
-                    "name": "Fall",
-                    "year":1,
-                    "courses": [
-                        {
-                            "id":"course1",
-                            "name":"Course 1",
-                            "code":"Course 3031"
-                        },{
-                            "id":"course1.1",
-                            "name":"Course Lab 1",
-                            "code":"Course 3033"
-                        }
-                    ]
-                },
-                {
-                    "id":"ESPA_julian_V1_Spring_1",
-                    "name": "Spring",
-                    "year":1,
-                    "courses": [
-                        {
-                            "id":"course2",
-                            "name":"Course 2",
-                            "code": "Course 3032"
-                        },{
-                            "id":"course2.1",
-                            "name":"Course Lab 2",
-                            "code":"Course 3034"
-                        }
-                    ]
-                },
-                {   
-                    "id":"ESPA_julian_V1_Summer_1",
-                    "name": "Summer",
-                    "year":1
-                },
-                {
-                    "id":"ESPA_julian_V1_ext_Summer_1",
-                    "name": "Summer_extended",
-                    "year":1
-                }
-            ]
-    }],
-    "co_reqs": [
-        {
-            "id":"spyreeQuim1",
-            "co_requisite":"spyreeQuimLab1"
-        },{
-            "id":"spyreeQuim2",
-            "co_requisite":"spyreeQuimLab2"
-        }
-    ],
-    "pre_reqs": [
-        {
-            "id":"spyreeQuim2",
-            "pre_requisite":"spyreeQuim1"
-        },{
-            "id":"spyreeQuimLab2",
-            "pre_requisite":"spyreeQuimLab1"
-        }
-    ]
-}
+curriculum = testCurriculum
 
 test_output = copy.deepcopy(curriculum)
-del test_output['graph'], test_output['co_reqs'], test_output['pre_reqs'], test_output["deptCode"]
-
-
-# curriculum = 
-# {
-#     "name": "ESPA v1",
-#     "department_id": 2,
-#     "deptCode": "ESPA",
-#     "rating": 0
-# }
 
 
 @pytest.fixture

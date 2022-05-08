@@ -3,42 +3,16 @@ import pytest
 from requests import session
 from app.main import create_app
 
+# This import is for variables that would be used in almost every test
+# If you see a variable that is not declared before hand, then its in this file
+from app.tests.testVars import *
+
 degree = {
     "department_id": 2,
     "name": "Estudios Hispanicos",
     "length": 4,
     "credits": 100
 }
-
-# Admin account credentials
-admin_account = {
-    "email": "admin@account.com",
-    "password": "admin"
-}
-
-# User account credentials
-user_account = {
-    "email": "juliantest2@test.com",
-    "password": "test"
-}
-
-# Error account credentials
-error_account = {
-    "email": "error@account.com",
-    "password": "test"
-}
-
-#Error messages
-
-userM = {"err": "User is not an admin. They are a student"}
-
-invalidSession = {"err": "Invalid Session"}
-
-depNotFound = {"err": "Department not found"}
-
-degNotFound = {"err": "Degree not found"}
-
-uniError = {"err": "University is not administered by this user"}
 
 
 @pytest.fixture
