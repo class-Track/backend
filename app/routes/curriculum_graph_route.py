@@ -27,7 +27,7 @@ def create_standard_curriculum():
     }
     years = data.pop('year_list')['year_ids']
 
-    categories_ids = data.pop('category_list')['category_ids'] if 'category_list' in data else None
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
     categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
 
     semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
