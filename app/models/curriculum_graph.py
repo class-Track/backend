@@ -39,14 +39,14 @@ class CurruculumGraph:
                 MERGE (ca:Category { id: cat.id, name: cat.name } )
                 MERGE (ca)-[:FROM_CURRICULUM]->(c)
                 
-                WITH DISTINCT cat, c, ca
-                
-                UNWIND cat.courses AS course
-                OPTIONAL MATCH (cu:Course {id: course.id})
-                FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
-                    CREATE (co:Course) SET co = course
-                    MERGE (co)-[:FROM_CATEGORY]->(ca)
-                )
+                WITH DISTINCT cat, c, ca, cat.courses AS courses
+
+                CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
+                    OPTIONAL MATCH (cu:Course {id: course.id})
+                    FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
+                        CREATE (co:Course) SET co = course
+                        MERGE (co)-[:FROM_CATEGORY]->(ca)
+                    )", "", {courses:courses, ca:ca}) YIELD value
 
                 WITH c 
             """ if categories else " ")
