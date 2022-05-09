@@ -35,7 +35,7 @@ def create_standard_curriculum():
 
     course_ids = data.pop('course_list')['course_ids']
     reqs = [data[co] for co in course_ids if (data[co]["prereqs"] or data[co]["coreqs"])]
-
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
     prereqs, coreqs = [],[]
 
     for c in reqs:
@@ -44,7 +44,7 @@ def create_standard_curriculum():
         for co in c["coreqs"]:
             coreqs.append({"id": c["id"], "co_id": co["id"]})
 
-    createdCurr = dao.create_standard_curr(curriculum, categories, semesters, prereqs, coreqs)
+    createdCurr = dao.create_standard_curr(curriculum, categories, semesters, prereqs, coreqs, cat_per_course)
 
     
     return make_response(jsonify(createdCurr), 200)
