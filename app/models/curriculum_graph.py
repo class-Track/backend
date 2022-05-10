@@ -1,7 +1,4 @@
 
-from flask import jsonify
-
-
 class CurruculumGraph:
     """
     The constructor expects an instance of the Neo4j Driver, which will be
@@ -199,9 +196,11 @@ class CurruculumGraph:
                     }
             for row in result:
                 res["courses"].append({
-                    "id": row[0].get("course_id"),
+                    "id": row[0].get("id"),
+                    "course_id": row[0].get("course_id"),
                     "name": row[0].get("name"),
-                    "code": row[0].get("classification")
+                    "classification": row[0].get("classification"),
+                    "department_id": row[0].get("department_id")
                 })
 
             return res
@@ -227,7 +226,7 @@ class CurruculumGraph:
         def get_cat_courses(tx, id, res):
             result = list(tx.run("""
                 MATCH (cat:Category { id:$id})<-[:FROM_CATEGORY]-(c:Course)
-                RETURN DISTINCT c.course_id AS id, c.name AS name, c.classification AS code
+                RETURN DISTINCT c.id AS id, c.course_id AS course_id, c.name AS name, c.classification AS classification, c.department_id AS department_id
             """, id=id))
 
             if result:
@@ -235,8 +234,10 @@ class CurruculumGraph:
                 for row in result:
                     res[id].append({
                         "id": row.get("id"),
+                        "course_id": row.get("course_id"),
                         "name": row.get("name"),
-                        "code": row.get("code"),
+                        "classification": row.get("classification"),
+                        "department_id": row.get("department_id"),
                         "list_type": "CATEGORY"
                     })
 
@@ -249,8 +250,8 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE]-(pre)
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH co, pre, coreq
-                    
-                    RETURN co.course_id AS course_id, co.id AS id, co.category AS category, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
+    
+                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
                 UNION
                 MATCH (curr2:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
@@ -258,7 +259,7 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH cu, pre, coreq
                     
-                    RETURN cu.course_id AS course_id, cu.id AS id, cu.category AS category, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
+                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
             """, id=curr_id))
             if result:
                 res['course_list'] = {
@@ -267,10 +268,13 @@ class CurruculumGraph:
                     "course_ids": []
                 }
                 for course in result:
-                    res['course_list']['course_ids'] = course.get('id')
+                    res['course_list']['course_ids'].append(course.get('id'))
                     res[course.get('id')] = {
-                        "id": course.get('id'),
-                        "course_id": course.get('course_id'),
+                        "id": course.get("id"),
+                        "course_id": course.get("course_id"),
+                        "name": course.get("name"),
+                        "classification": course.get("classification"),
+                        "department_id": course.get("department_id"),
                         "category": course.get('category'),
                         "pre_requisites": course.get('pre_requisites'),
                         "co_requisites": course.get('co_requisites')
