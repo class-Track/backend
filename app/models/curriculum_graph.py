@@ -22,14 +22,14 @@ class CurruculumGraph:
                 MERGE (s:Semester { id: sem.id, name: sem.name, year: sem.year } )
                 MERGE (s)-[:FROM_CURRICULUM]->(c)
                 
-                WITH c, sem, s
+                WITH c, sem, s, sem.courses AS courses
                 
-                UNWIND sem.courses AS course
-                OPTIONAL MATCH(co:Course {id: course.id})
-                FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
-                    CREATE(co:Course) SET co = course
-                    MERGE (co)-[:FROM_SEMESTER]->(s)
-                )
+                CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
+                    OPTIONAL MATCH(co:Course {id: course.id})
+                    FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
+                        CREATE(co:Course) SET co = course
+                        MERGE (co)-[:FROM_SEMESTER]->(s)
+                    ) RETURN c", "", {courses:courses, s:s, c:c}) YIELD value
 
                 WITH c
             """ 
@@ -46,18 +46,21 @@ class CurruculumGraph:
                     FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
                         CREATE (co:Course) SET co = course
                         MERGE (co)-[:FROM_CATEGORY]->(ca)
-                    )", "", {courses:courses, ca:ca}) YIELD value
+                    ) RETURN c", "", {courses:courses, ca:ca, c:c}) YIELD value
 
-                WITH c 
+                WITH c
             """ if categories else " ")
             +
-            """
+            ("""
                 UNWIND $coreqs AS coreq 
                 MATCH (c1:Course) WHERE c1.id = coreq.id
                 MATCH (c2:Course) WHERE c2.id = coreq.co_id
                 MERGE (c2)-[:CO_REQUISITE]->(c1)
 
                 WITH c
+            """ if coreqs else " ")
+            +
+            ("""
 
                 UNWIND $prereqs AS prereq 
                 MATCH (c1:Course) WHERE c1.id = prereq.id
@@ -65,18 +68,22 @@ class CurruculumGraph:
                 MERGE (c2)-[:PRE_REQUISITE]->(c1)
 
                 WITH c
+            """ if prereqs else " ")
+            +
+            ("""
 
                 UNWIND $cat_per_course AS cpc
                 MERGE (c3:Course {course_id: cpc.id})
                 ON MATCH
                     SET c3.category = cpc.category
 
-                RETURN c
-            """, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course).single()
+                RETURN DISTINCT c.curriculum_sequence
+            """ if cat_per_course else "DISTINCT RETURN c.curriculum_sequence")
+        , curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course).single()
 
         with self.driver.session() as session:
             record = session.write_transaction(create_curriculum, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course)
-            return { "id": record["c"].id }
+            return { "id": record[0] }
 
 
 
