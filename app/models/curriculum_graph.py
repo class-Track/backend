@@ -270,7 +270,7 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH co, pre, coreq
     
-                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
+                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
                 UNION
                 MATCH (curr2:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
@@ -278,7 +278,7 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH cu, pre, coreq
                     
-                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
+                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
             """, id=curr_id))
             if result:
                 res['course_list'] = {
@@ -295,8 +295,8 @@ class CurruculumGraph:
                         "classification": course.get("classification"),
                         "department_id": course.get("department_id"),
                         "category": course.get('category'),
-                        "pre_requisites": course.get('pre_requisites'),
-                        "co_requisites": course.get('co_requisites')
+                        "prereqs": course.get('prereqs'),
+                        "coreqs": course.get('coreqs')
                     }
             
 
