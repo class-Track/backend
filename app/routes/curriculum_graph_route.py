@@ -18,12 +18,16 @@ def create_standard_curriculum():
         return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
     curriculum = {    
-        "id": data.pop('curriculum_sequence'),
+        "curriculum_sequence": data.pop('curriculum_sequence'),
         "name":  data.pop('name'),
-        "program":  data.pop("deptCode"),
-        "user": data.pop('user_id'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
         "length":  data.pop('length'),
-        "credits":  data.pop('credits')
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name')
     }
     years = data.pop('year_list')['year_ids']
 
@@ -48,6 +52,9 @@ def create_standard_curriculum():
 
     
     return make_response(jsonify(createdCurr), 200)
+
+
+
 
 
 @app_curr_graph_routes.route('/currGraph', methods=['GET'])

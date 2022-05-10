@@ -8,13 +8,13 @@ class CurruculumGraph:
         self.driver=driver
 
     """
-    Create a new standard curriculum - MODIFIED 
+    Create a new standard curriculum 
     """
     def create_standard_curr(self, curr, categories, semesters, prereqs, coreqs, cat_per_course):
         # Save curriculum in database
         def create_curriculum(tx, curr, categories, semesters, prereqs, coreqs, cat_per_course):
             return tx.run("""
-                MERGE (c:Curriculum { id: $curr.id, name: $curr.name, program: $curr.program, user: $curr.user, length: $curr.length, credits: $curr.credits })
+                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name })
                 
                 WITH c
                 
@@ -36,7 +36,7 @@ class CurruculumGraph:
             + ("""
                 
                 UNWIND $categories AS cat
-                MERGE (ca:Category { id: cat.id, name: cat.name } )
+                MERGE (ca:Category { id: cat.id, name: cat.name, credits: cat.credits } )
                 MERGE (ca)-[:FROM_CURRICULUM]->(c)
                 
                 WITH DISTINCT cat, c, ca, cat.courses AS courses
@@ -83,29 +83,32 @@ class CurruculumGraph:
     """
     Create a new Custom curriculum 
     """
-    def create_custom_curr(self, graph):
+    def create_custom_curr(self, curr):
         # Save curriculum in database
-        def create_curriculum(tx, graph):
+        def create_curriculum(tx, curr):
             return tx.run("""
-                UNWIND $graph AS curr
-                MERGE (c:Curriculum { id: curr.id, name: curr.name,  program: curr.program, user: curr.user} )
+                MERGE (c:Curriculum { curriculum_sequence: $curr.id, name: $curr.name, program: $curr.program, user: $curr.user, length: $curr.length, credits: $curr.credits })
                 
                 WITH c
                 
-                UNWIND $graph[0].semesters AS sem
+                UNWIND $semesters AS sem
                 MERGE (s:Semester { id: sem.id, name: sem.name, year: sem.year } )
                 MERGE (s)-[:FROM_CURRICULUM]->(c)
-
-                FOREACH (course in sem.courses | 
+                
+                WITH c, sem, s
+                
+                UNWIND sem.courses AS course
+                OPTIONAL MATCH(co:Course {id: course.id})
+                FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
                     CREATE(co:Course) SET co = course
                     MERGE (co)-[:FROM_SEMESTER]->(s)
                 )
 
-                RETURN c
-            """, graph=graph).single()
+                WITH c
+            """, curr=curr).single()
 
         with self.driver.session() as session:
-            record = session.write_transaction(create_curriculum, graph=graph)
+            record = session.write_transaction(create_curriculum, curr=curr)
             return { "id": record["c"].id }
 
     """"
@@ -153,17 +156,29 @@ class CurruculumGraph:
         # Get curriculum from db
         def get_semesters(tx, id):
             result = list(tx.run("""
-                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem: Semester)
-                RETURN DISTINCT sem
-            """, id=id))
+                MATCH (curr:Curriculum { curriculum_sequence: $curriculum_sequence})<-[:FROM_CURRICULUM]-(sem: Semester)
+                RETURN DISTINCT sem, curr
+            """, curriculum_sequence=id))
 
             if not result:
                 res = None
             else:
-                res = {"year_list": { "id": "year_list",
+                print('___'*10)
+                curr = result[1][1]
+                res = {
+                    "credits": curr.get("credits"),
+                    "name": curr.get("name"),
+                    "curriculum_sequence": curr.get("curriculum_sequence"),
+                    "degree_id": curr.get("degree_id"),
+                    "degree_name": curr.get("degree_name"),
+                    "department_id": curr.get("department_id"),
+                    "department_name": curr.get("department_name"),
+                    "deptCode": curr.get("deptCode"),
+                    "year_list": { "id": "year_list",
                                       "name": "Year List",
                                       "year_ids": []
                                     }}
+            
                 for row in result:
                     year = str(row[0].get("year"))
                     semesterId = row[0].get("id")
@@ -207,18 +222,24 @@ class CurruculumGraph:
 
         def get_categories(tx, id, res):
             result = list(tx.run("""
-                MATCH (curr:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(cat: Category)
-                RETURN DISTINCT cat.name AS name, cat.id AS id
+                MATCH (curr:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)
+                RETURN DISTINCT cat.name AS name, cat.id AS id, cat.credits AS credits
             """, id=id))
 
             if result:
                 res["category_list"] = {  "id": "category_list",
                                           "name": "Category List",
                                           "category_ids": [] }
-                for row in result:
-                    id = row.get("id")
+                for cat in result:
+                    id = cat.get("id")
                     res["category_list"]["category_ids"].append(id)
-                    
+                    res[id] = {
+                        "courses": [],
+                        "credits": cat.get("credits"),
+                        "id": id,
+                        "name": cat.get("name"),
+                        "list_type": "CATEGORY",
+                    }
                     get_cat_courses(tx, id, res)
                         
             return res
@@ -230,21 +251,19 @@ class CurruculumGraph:
             """, id=id))
 
             if result:
-                res[id] = []
                 for row in result:
-                    res[id].append({
+                    res[id]["courses"].append({
                         "id": row.get("id"),
                         "course_id": row.get("course_id"),
                         "name": row.get("name"),
                         "classification": row.get("classification"),
                         "department_id": row.get("department_id"),
-                        "list_type": "CATEGORY"
                     })
 
         
         def get_all_course_info(tx, curr_id, res):
             result = list(tx.run("""
-                MATCH (curr1:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(sem: Semester)<-[:FROM_SEMESTER]-(co: Course)
+                MATCH (curr1:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(sem: Semester)<-[:FROM_SEMESTER]-(co: Course)
 
                 UNWIND co AS course
                     OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE]-(pre)
@@ -253,7 +272,7 @@ class CurruculumGraph:
     
                     RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification,course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS pre_requisites, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS co_requisites
                 UNION
-                MATCH (curr2:Curriculum { id: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
+                MATCH (curr2:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
                     OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE]-(pre)
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
