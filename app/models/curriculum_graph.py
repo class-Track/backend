@@ -25,11 +25,15 @@ class CurruculumGraph:
                 WITH c, sem, s, sem.courses AS courses
                 
                 CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
-                    OPTIONAL MATCH(co:Course {id: course.id})
+                    OPTIONAL MATCH(co:Course {course_id: course.course_id})
                     FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
-                        CREATE(co:Course) SET co = course
+                        MERGE (co:Course {classification: course.classification, course_id: course.course_id, department_id: course.department_id, id: course.id, name: course.name }) 
                         MERGE (co)-[:FROM_SEMESTER]->(s)
-                    ) RETURN c", "", {courses:courses, s:s, c:c}) YIELD value
+                    ) 
+                    WITH c, course, s
+                    MATCH(co:Course {course_id: course.course_id})
+                    MERGE (co)-[:FROM_SEMESTER]->(s)
+                    RETURN c", "", {courses:courses, s:s, c:c}) YIELD value
 
                 WITH c
             """ 
@@ -42,11 +46,15 @@ class CurruculumGraph:
                 WITH DISTINCT cat, c, ca, cat.courses AS courses
 
                 CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
-                    OPTIONAL MATCH (cu:Course {id: course.id})
+                    OPTIONAL MATCH (cu:Course {course_id: course.course_id})
                     FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
-                        CREATE (co:Course) SET co = course
+                        MERGE (co:Course {classification: course.classification, course_id: course.course_id, department_id: course.department_id, id: course.id, name: course.name }) 
                         MERGE (co)-[:FROM_CATEGORY]->(ca)
-                    ) RETURN c", "", {courses:courses, ca:ca, c:c}) YIELD value
+                    ) 
+                    WITH c, course, ca
+                    MATCH(co:Course {course_id: course.course_id})
+                    MERGE (co)-[:FROM_CATEGORY]->(ca)
+                    RETURN c", "", {courses:courses, ca:ca, c:c}) YIELD value
 
                 WITH c
             """ if categories else " ")
@@ -105,7 +113,7 @@ class CurruculumGraph:
                 WITH c, sem, s
                 
                 UNWIND sem.courses AS course
-                OPTIONAL MATCH(co:Course {id: course.id})
+                OPTIONAL MATCH(co:Course {course_id: course.course_id})
                 FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
                     CREATE(co:Course) SET co = course
                     MERGE (co)-[:FROM_SEMESTER]->(s)
@@ -170,7 +178,6 @@ class CurruculumGraph:
             if not result:
                 res = None
             else:
-                print('___'*10)
                 curr = result[1][1]
                 res = {
                     "credits": curr.get("credits"),
@@ -190,12 +197,12 @@ class CurruculumGraph:
                     year = str(row[0].get("year"))
                     semesterId = row[0].get("id")
                     if year in res:
-                        res[year]["semesters_ids"].append(semesterId)
+                        res[year]["semester_ids"].append(semesterId)
                     else:
                         res["year_list"]["year_ids"].append(year)
                         res[year] = { "id": "year_{}".format(year),
                                     "name": "Year {}".format(year),
-                                    "semesters_ids": [semesterId] }
+                                    "semester_ids": [semesterId] }
 
                     res[semesterId] = get_courses(tx, semesterId, row[0].get("name"), year)
 
@@ -230,7 +237,7 @@ class CurruculumGraph:
         def get_categories(tx, id, res):
             result = list(tx.run("""
                 MATCH (curr:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)
-                RETURN DISTINCT cat.name AS name, cat.id AS id, cat.credits AS credits
+                RETURN DISTINCT cat.name AS name, cat.id AS id, cat.credits AS credits, cat.category_id AS category_id, cat.classification AS classification
             """, id=id))
 
             if result:
@@ -245,6 +252,8 @@ class CurruculumGraph:
                         "credits": cat.get("credits"),
                         "id": id,
                         "name": cat.get("name"),
+                        "classification": cat.get("classification"),
+                        "category_id": cat.get("category_id"),
                         "list_type": "CATEGORY",
                     }
                     get_cat_courses(tx, id, res)
