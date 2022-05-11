@@ -29,7 +29,7 @@ def create_course():
 
     course_access = Courses()
     course_id = course_access.create(
-        data["department_id"], data["name"], data["classification"])
+        data["department_id"], data["name"], data["classification"], data["credits"])
     return make_response(jsonify(course_id), 200)
 
 # READ ALL
@@ -71,7 +71,7 @@ def update_course(id):
     if course_access.read(id) is None:
         return make_response(jsonify({"err": "Course not found"}), 404)
     updated_course = course_access.update(
-        id, data["department_id"], data["name"], data["classification"])
+        id, data["department_id"], data["name"], data["classification"], data["credits"])
     return make_response(jsonify({"course_id": updated_course}), 200)
 
 # DELETE
