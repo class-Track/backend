@@ -53,6 +53,52 @@ def create_standard_curriculum():
     
     return make_response(jsonify(createdCurr), 200)
 
+@app_curr_graph_routes.route('/update/standard_curriculum', methods=['PUT'])
+def update_standard_curriculum():
+    data = request.get_json()
+    dao = CurruculumGraph(current_app.driver)
+    s, admin = SManager.get_tied_user(data["session_id"])
+
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
+
+    curriculum = {    
+        "curriculum_sequence": data.pop('curriculum_sequence'),
+        "name":  data.pop('name'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
+        "length":  data.pop('length'),
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name')
+    }
+    years = data.pop('year_list')['year_ids']
+
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
+    categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
+
+    semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
+    semesters = [data[sem] for sem in semesters_ids]
+
+    course_ids = data.pop('course_list')['course_ids']
+    reqs = [data[co] for co in course_ids if (data[co]["prereqs"] or data[co]["coreqs"])]
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
+    prereqs, coreqs = [],[]
+
+    for c in reqs:
+        for pre in c["prereqs"]:
+            prereqs.append({"id": c["id"], "pre_id": pre["id"]})
+        for co in c["coreqs"]:
+            coreqs.append({"id": c["id"], "co_id": co["id"]})
+
+    updatedCurr = dao.update_custom_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, prereqs, coreqs, cat_per_course)
+    if not updatedCurr:
+        make_response(jsonify({"err": "Curriculum was not found"}), 404)
+    return make_response(jsonify(updatedCurr), 200)
 
 @app_curr_graph_routes.route('/currGraph', methods=['GET'])
 def get_curriculum():

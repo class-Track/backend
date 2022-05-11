@@ -162,7 +162,7 @@ def update_custom_curriculum():
     curriculum_access.update(curriculum['curriculum_sequence'], curriculum['name'],len(semesters_ids), len(course_ids))
 
     dao = CurruculumGraph(current_app.driver)
-    id = dao.update_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, cat_per_course)
+    id = dao.update_custom_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, cat_per_course)
 
     return make_response(jsonify({"curriculum_id": id}), 200)
 

@@ -218,11 +218,19 @@ class CurruculumGraph:
             return records
 
     """"
-    Update a curriculum
+    Update a Custom curriculum
     """
-    def update_curriculum(self, curriculum_sequence, curr, categories, semesters, cat_per_course):
+    def update_custom_curriculum(self, curriculum_sequence, curr, categories, semesters, cat_per_course):
         self.delete_curriculum(curriculum_sequence)
         id = self.create_custom_curr(curr, categories, semesters, cat_per_course)
+        return id
+
+    """"
+    Update a Standard curriculum
+    """
+    def update_standard_curriculum(self, curriculum_sequence, curr, categories, semesters, coreqs, prereqs, cat_per_course):
+        self.delete_curriculum(curriculum_sequence)
+        id = self.create_standard_curr(curr, categories, semesters, coreqs, prereqs, cat_per_course)
         return id
    
     """
