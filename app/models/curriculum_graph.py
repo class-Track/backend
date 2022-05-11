@@ -100,7 +100,7 @@ class CurruculumGraph:
         # Save curriculum in database
         def create_curriculum(tx, curr, categories, semesters, cat_per_course):
             return tx.run("""
-                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name })
+                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name, isDraft: $curr.isDraft })
                 
                 WITH c
                 
@@ -343,7 +343,7 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH co, pre, coreq
     
-                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.credits AS credits, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, pre.credits AS credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, coreq.credits AS credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
+                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.credits AS credits, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
                 UNION
                 MATCH (curr2:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
@@ -351,7 +351,7 @@ class CurruculumGraph:
                     OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
                     WITH cu, pre, coreq
                     
-                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, co.credits AS credits, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, pre.credits AS credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, coreq.credits AS credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
+                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.credits AS credits, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
             """, id=curr_id))
             if result:
                 res['course_list'] = {
