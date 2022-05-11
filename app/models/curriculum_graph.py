@@ -36,7 +36,7 @@ class CurruculumGraph:
             + ("""
                 
                 UNWIND $categories AS cat
-                MERGE (ca:Category { id: cat.id, category_id: cat.category_id, name: cat.name, credits: cat.credits } )
+                MERGE (ca:Category { id: cat.id, category_id: cat.category_id, classification: cat.classification, name: cat.name, credits: cat.credits } )
                 MERGE (ca)-[:FROM_CURRICULUM]->(c)
                 
                 WITH DISTINCT cat, c, ca, cat.courses AS courses
