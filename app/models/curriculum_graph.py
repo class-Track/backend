@@ -93,16 +93,14 @@ class CurruculumGraph:
             record = session.write_transaction(create_curriculum, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course)
             return { "id": record[0] }
 
-
-
     """
     Create a new Custom curriculum 
     """
-    def create_custom_curr(self, curr):
+    def create_custom_curr(self, curr, categories, semesters, cat_per_course):
         # Save curriculum in database
-        def create_curriculum(tx, curr):
+        def create_curriculum(tx, curr, categories, semesters, cat_per_course):
             return tx.run("""
-                MERGE (c:Curriculum { curriculum_sequence: $curr.id, name: $curr.name, program: $curr.program, user: $curr.user, length: $curr.length, credits: $curr.credits })
+                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name })
                 
                 WITH c
                 
@@ -110,21 +108,56 @@ class CurruculumGraph:
                 MERGE (s:Semester { id: sem.id, name: sem.name, year: sem.year } )
                 MERGE (s)-[:FROM_CURRICULUM]->(c)
                 
-                WITH c, sem, s
+                WITH c, sem, s, sem.courses AS courses
                 
-                UNWIND sem.courses AS course
-                OPTIONAL MATCH(co:Course {course_id: course.course_id})
-                FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
-                    CREATE(co:Course) SET co = course
+                CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
+                    OPTIONAL MATCH(co:Course {course_id: course.course_id})
+                    FOREACH (ignored IN CASE WHEN co IS NULL THEN [1] ELSE [] END  | 
+                        MERGE (co:Course {classification: course.classification, course_id: course.course_id, department_id: course.department_id, id: course.id, name: course.name }) 
+                        MERGE (co)-[:FROM_SEMESTER]->(s)
+                    ) 
+                    WITH c, course, s
+                    MATCH(co:Course {course_id: course.course_id})
                     MERGE (co)-[:FROM_SEMESTER]->(s)
-                )
+                    RETURN c", "", {courses:courses, s:s, c:c}) YIELD value
 
                 WITH c
-            """, curr=curr).single()
+            """ 
+            + ("""
+                
+                UNWIND $categories AS cat
+                MERGE (ca:Category { id: cat.id, category_id: cat.category_id, classification: cat.classification, name: cat.name, credits: cat.credits } )
+                MERGE (ca)-[:FROM_CURRICULUM]->(c)
+                
+                WITH DISTINCT cat, c, ca, cat.courses AS courses
+
+                CALL apoc.do.when(size(courses) > 0, "UNWIND courses AS course
+                    OPTIONAL MATCH (cu:Course {course_id: course.course_id})
+                    FOREACH(ignored IN CASE WHEN cu IS NULL THEN [1] ELSE [] END |
+                        MERGE (co:Course {classification: course.classification, course_id: course.course_id, department_id: course.department_id, id: course.id, name: course.name }) 
+                        MERGE (co)-[:FROM_CATEGORY]->(ca)
+                    ) 
+                    WITH c, course, ca
+                    MATCH(co:Course {course_id: course.course_id})
+                    MERGE (co)-[:FROM_CATEGORY]->(ca)
+                    RETURN c", "", {courses:courses, ca:ca, c:c}) YIELD value
+
+                WITH c
+            """ if categories else " ")
+            +
+            ("""
+                UNWIND $cat_per_course AS cpc
+                MERGE (c3:Course {course_id: cpc.id})
+                ON MATCH
+                    SET c3.category = cpc.category
+
+                RETURN DISTINCT c.curriculum_sequence
+            """ if cat_per_course else "DISTINCT RETURN c.curriculum_sequence")
+        , curr=curr, categories=categories, semesters=semesters, cat_per_course=cat_per_course).single()
 
         with self.driver.session() as session:
-            record = session.write_transaction(create_curriculum, curr=curr)
-            return { "id": record["c"].id }
+            record = session.write_transaction(create_curriculum, curr=curr, categories=categories, semesters=semesters, cat_per_course=cat_per_course)
+            return { "id": record[0] }
 
     """"
     Get courses Pre Requisistes
@@ -164,8 +197,29 @@ class CurruculumGraph:
             records = session.write_transaction(get_co_reqs, id=id)
             return records
 
+    """"
+    Delete curriculum node and relationships
     """
-    Get years from a curriculum 
+    def delete_curriculum(self, id):
+        # Get pre requisites
+        def delete_curriculum(tx, id):
+            if id == None:
+                return None
+            result = (tx.run("""
+                MATCH (c:Curriculum {curriculum_sequence: $curr_id})<-[:FROM_CURRICULUM | :FROM_CATEGORY]-(sem)
+                WITH c, sem, c.curriculum_sequence AS id
+                DETACH DELETE sem, c
+                RETURN DISTINCT id
+            """, curr_id=id)).single()
+
+            return result.get('id')
+
+        with self.driver.session() as session:
+            records = session.write_transaction(delete_curriculum, id=id)
+            return records
+
+    """
+    Get a curriculum 
     """
     def get_curriculum(self, id):
         # Get curriculum from db
@@ -188,6 +242,7 @@ class CurruculumGraph:
                     "department_id": curr.get("department_id"),
                     "department_name": curr.get("department_name"),
                     "deptCode": curr.get("deptCode"),
+                    "length": curr.get("length"),
                     "year_list": { "id": "year_list",
                                       "name": "Year List",
                                       "year_ids": []
@@ -319,3 +374,4 @@ class CurruculumGraph:
         with self.driver.session() as session:
             curriculum = session.write_transaction(get_semesters, id=id)
             return curriculum
+            

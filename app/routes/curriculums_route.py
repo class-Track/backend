@@ -8,49 +8,49 @@ SManager = SessionManager()
 app_curriculum_routes = Blueprint('curriculums_routes', __name__)
 
 # CREATE Curriculum
-@app_curriculum_routes.route('/classTrack/curriculum', methods=['POST'])
+@app_curriculum_routes.route('/classTrack/custom_curriculum', methods=['POST'])
 def create_curriculum():
     data = request.get_json()
     s, _ = SManager.get_tied_user(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
-
-    if s["user_id"] != data["user_id"]:
+    if str(s["user_id"]) != str(data["user_id"]):
         return make_response(jsonify({"err": "Session and curriculum user_id mismatch"}), 403)
 
-    graph = data['graph']
-    co_reqs = data['co_reqs'] if 'co_reqs' in data else None
-    pre_reqs = data['pre_reqs'] if 'pre_reqs' in data else None
+    curriculum = {    
+        "name":  data.pop('name'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
+        "length":  data.pop('length'),
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name'),
+        "isDraft": data.pop('isDraft')
+    }
+    years = data.pop('year_list')['year_ids']
 
-    sem = graph[0].get("semesters")
-    courses = 0
-    for s in sem:
-        courses+= len(s.get("courses")) if s.get("courses") else 0
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
+    categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
+
+    semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
+    semesters = [data[sem] for sem in semesters_ids]
+
+    course_ids = data.pop('course_list')['course_ids']
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
 
     curriculum_access = Curriculums()
+    curriculum['curriculum_sequence'] = curriculum_access.create(curriculum.get("name"), curriculum.get("deptCode"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids)).get("curriculum_id")
 
-    curriculum_id = curriculum_access.create(data["name"], data["deptCode"], data["user_id"], data["degree_id"], len(sem), courses).get("curriculum_id")
-
-    graph[0]["id"] = str(curriculum_id)
-    graph[0]["name"] = data["name"]
-    graph[0]["program"] = data["deptCode"]
-    graph[0]["user"] = data["user_id"]
-
-    createdCurr = create_curriculum_graph(graph, co_reqs, pre_reqs)
+    dao = CurruculumGraph(current_app.driver)
+    createdCurr = dao.create_custom_curr(curriculum, categories, semesters, cat_per_course)
 
     if(createdCurr is None):
+        curriculum_access.delete(curriculum['curriculum_sequence'])
         return make_response(jsonify({"err": "Curriculum graph could not be created"}), 403)
 
-    return make_response(jsonify(curriculum_id), 200)
-
-def create_curriculum_graph(graph, co_reqs=None, pre_reqs=None):
-    dao = CurruculumGraph(current_app.driver)
-
-    if co_reqs is None and pre_reqs is None: 
-        curr = dao.create_custom_curr(graph)
-    else: 
-        curr = dao.create_standard_curr(graph, co_reqs, pre_reqs)
-    return curr
+    return make_response(jsonify({'id': curriculum['curriculum_sequence']}), 200)
 
 # READ ALL
 @app_curriculum_routes.route('/classTrack/curriculums', methods=['GET'])
@@ -142,4 +142,12 @@ def delete_curriculum(id):
         return make_response(jsonify({"err": "Session does not own curriculum"}), 403)
 
     deleted_curriculum = curriculum_access.delete(id)
+
+    dao = CurruculumGraph(current_app.driver)
+    wasDeleted = dao.delete_curriculum(id)
+    print(wasDeleted)
+
+    if(not wasDeleted):
+        return make_response(jsonify({"err": "Curriculum was not deleted from graph db"}), 403)
+
     return make_response(jsonify({"curriculum_id": deleted_curriculum}), 200)

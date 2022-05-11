@@ -54,9 +54,6 @@ def create_standard_curriculum():
     return make_response(jsonify(createdCurr), 200)
 
 
-
-
-
 @app_curr_graph_routes.route('/currGraph', methods=['GET'])
 def get_curriculum():
     id = request.args.get("id")
