@@ -134,6 +134,16 @@ class Curriculums:
             self.connection.commit()
             return id
 
+    def update(self, id, name, semesters, course_count):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "UPDATE curriculums"
+                " SET name=%(name)s, semesters=%(semesters)s, course_count=%(course_count)s"
+                " WHERE curriculum_id=%(curriculum_id)s ",
+                {"curriculum_id": id, "name": name, "semesters":semesters, "course_count":course_count})
+            self.connection.commit()
+            return id
+
     def delete(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(

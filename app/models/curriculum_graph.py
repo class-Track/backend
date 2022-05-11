@@ -1,4 +1,3 @@
-
 class CurruculumGraph:
     """
     The constructor expects an instance of the Neo4j Driver, which will be
@@ -201,7 +200,7 @@ class CurruculumGraph:
     Delete curriculum node and relationships
     """
     def delete_curriculum(self, id):
-        # Get pre requisites
+        # Delete curriculum
         def delete_curriculum(tx, id):
             if id == None:
                 return None
@@ -218,6 +217,14 @@ class CurruculumGraph:
             records = session.write_transaction(delete_curriculum, id=id)
             return records
 
+    """"
+    Update a curriculum
+    """
+    def update_curriculum(self, curriculum_sequence, curr, categories, semesters, cat_per_course):
+        self.delete_curriculum(curriculum_sequence)
+        id = self.create_custom_curr(curr, categories, semesters, cat_per_course)
+        return id
+   
     """
     Get a curriculum 
     """

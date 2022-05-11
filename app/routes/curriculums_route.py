@@ -99,7 +99,7 @@ def get_degree_top_rated():
 
 
 # UPDATE
-@app_curriculum_routes.route('/classTrack/curriculum/update/<string:id>', methods=['PUT'])
+@app_curriculum_routes.route('/classTrack/curriculum/update_rating/<string:id>', methods=['PUT'])
 def update_curriculum_rating(id):
     data = request.get_json()
     s, _ = SManager.get_tied_user(data["session_id"])
@@ -123,6 +123,48 @@ def rename_curriculum(id):
     updated_curriculum = curriculum_access.rename(
         id, data["name"])
     return make_response(jsonify({"curriculum_id": updated_curriculum}), 200)
+
+# UPDATE 
+@app_curriculum_routes.route('/classTrack/curriculum/update_custom', methods=['PUT'])
+def update_custom_curriculum():
+    data = request.get_json()
+    s, _ = SManager.get_tied_user(data["session_id"])
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+    if str(s["user_id"]) != str(data["user_id"]):
+        return make_response(jsonify({"err": "Session and curriculum user_id mismatch"}), 403)
+
+    curriculum = {    
+        "name":  data.pop('name'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
+        "length":  data.pop('length'),
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name'),
+        "curriculum_sequence": data.pop('curriculum_sequence'),
+        "isDraft": data.pop('isDraft')
+    }
+    years = data.pop('year_list')['year_ids']
+
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
+    categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
+
+    semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
+    semesters = [data[sem] for sem in semesters_ids]
+
+    course_ids = data.pop('course_list')['course_ids']
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
+
+    curriculum_access = Curriculums()
+    curriculum_access.update(curriculum['curriculum_sequence'], curriculum['name'],len(semesters_ids), len(course_ids))
+
+    dao = CurruculumGraph(current_app.driver)
+    id = dao.update_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, cat_per_course)
+
+    return make_response(jsonify({"curriculum_id": id}), 200)
 
 # DELETE
 @app_curriculum_routes.route('/classTrack/curriculum/delete/<string:id>', methods=['POST'])
