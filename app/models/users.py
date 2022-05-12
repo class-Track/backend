@@ -98,6 +98,20 @@ class Users:
                 user = None
             return user
 
+    def readStudentProfile(self, id):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT email, first_name, last_name, degrees.name AS degree_name, d.name AS department_name, u.name AS university_name "
+                           "FROM students INNER JOIN users ON user_id = students.student_id NATURAL INNER JOIN degrees "
+                           "NATURAL INNER JOIN departments d INNER JOIN universities u ON d.university_id = u.university_id "
+                           "WHERE user_id=%(user_id)s",
+                           {"user_id": id})
+            self.connection.commit()
+            try:
+                user = cursor.fetchone()
+            except TypeError:
+                user = None
+            return user
+
     def update(self, id, isAdmin, variant_id, first_name, last_name, email, password):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
