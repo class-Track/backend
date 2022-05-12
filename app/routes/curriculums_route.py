@@ -20,6 +20,7 @@ def create_curriculum():
     curriculum = {    
         "name":  data.pop('name'),
         "deptCode":  data.pop("deptCode"),
+        "curriculum_sequence": data.pop('curriculum_sequence'),
         "user_id": data.pop('user_id'),
         "length":  data.pop('length'),
         "credits":  data.pop('credits'),
@@ -41,7 +42,7 @@ def create_curriculum():
     cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
 
     curriculum_access = Curriculums()
-    curriculum['curriculum_sequence'] = curriculum_access.create(curriculum.get("name"), curriculum.get("deptCode"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids), curriculum['isDraft']).get("curriculum_id")
+    curriculum_access.create(curriculum.get("name"), curriculum.get("curriculum_sequence"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids), curriculum['isDraft'])
 
     dao = CurruculumGraph(current_app.driver)
     createdCurr = dao.create_custom_curr(curriculum, categories, semesters, cat_per_course)
@@ -51,6 +52,20 @@ def create_curriculum():
         return make_response(jsonify({"err": "Curriculum graph could not be created"}), 403)
 
     return make_response(jsonify({'id': curriculum['curriculum_sequence']}), 200)
+
+# Get curriculumId for user
+@app_curriculum_routes.route('/classTrack/curriculums/newID', methods=['GET'])
+def getNewCurriculumID():
+    curriculum_access = Curriculums()
+    deptCode = request.args.get("deptCode")
+    user_id = request.args.get("user_id")
+
+    id = curriculum_access.getNewCurriculumID(deptCode, user_id)
+    if not id:
+        return make_response(jsonify({"err": "Id could not be created"}), 401)
+    else:
+        return make_response(jsonify(id), 200)
+
 
 # READ ALL
 @app_curriculum_routes.route('/classTrack/curriculums', methods=['GET'])

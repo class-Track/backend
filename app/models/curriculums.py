@@ -11,9 +11,20 @@ class Curriculums:
     def __init__(self):
         self.connection = dbconnection().connection()
 
-    def create(self, name, deptCode, user_id, degree_id, semesters, course_count, isDraft):
+    def create(self, name, curriculum_id, user_id, degree_id, semesters, course_count, isDraft):  
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "INSERT INTO curriculums (name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft)"
+                " VALUES ( %(name)s, %(curriculum_id)s, %(user_id)s, %(degree_id)s, 0, %(semesters)s, %(course_count)s, %(isDraft)s)"
+                " RETURNING curriculum_id", {
+                    "name": name, "curriculum_id": curriculum_id, "user_id": user_id, "degree_id": degree_id, "rating": 0, "semesters":semesters, "course_count":course_count, "isDraft":isDraft }
+            )
+            self.connection.commit()
+            curriculum_id = cursor.fetchone()
+            return curriculum_id
+
+    def getNewCurriculumID(self, deptCode, user_id):
         curriculum = '{}_{}'.format(deptCode, user_id)
-        
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "SELECT count(curriculum_id) as curr_count FROM curriculums" 
@@ -23,15 +34,6 @@ class Curriculums:
             count = cursor.fetchone()['curr_count']
 
             curriculum_id = '{}_V{}'.format(curriculum, count+1)
-
-            cursor.execute(
-                "INSERT INTO curriculums (name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft)"
-                " VALUES ( %(name)s, %(curriculum_id)s, %(user_id)s, %(degree_id)s, 0, %(semesters)s, %(course_count)s, %(isDraft)s)"
-                " RETURNING curriculum_id", {
-                    "name": name, "curriculum_id": curriculum_id, "user_id": user_id, "degree_id": degree_id, "rating": 0, "semesters":semesters, "course_count":course_count, "isDraft":isDraft }
-            )
-            self.connection.commit()
-            curriculum_id = cursor.fetchone()
             return curriculum_id
 
     def read_all(self):
