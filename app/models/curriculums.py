@@ -37,14 +37,14 @@ class Curriculums:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums")
+                "SELECT name, curriculum_id AS curriculum_sequence, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums")
             self.connection.commit()
             curriculums = cursor.fetchall()
             return curriculums
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
+            cursor.execute("SELECT name, curriculum_id AS curriculum_sequence, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
                            {"curriculum_id": id})
             self.connection.commit()
             try:
@@ -56,7 +56,7 @@ class Curriculums:
     def get_curriculum_by_user(self, user_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                            SELECT  cu.curriculum_id, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
+                            SELECT  cu.curriculum_id AS curriculum_sequence, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id
@@ -74,7 +74,7 @@ class Curriculums:
     def get_drafts_by_user(self, user_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                            SELECT  cu.curriculum_id, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
+                            SELECT  cu.curriculum_id AS curriculum_sequence, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id
@@ -92,7 +92,7 @@ class Curriculums:
     def get_degree_most_visited(self, degree_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                            SELECT  h.curriculum_id, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, COUNT(*) AS times_visited FROM history h
+                            SELECT h.curriculum_id AS curriculum_id, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, COUNT(*) AS times_visited FROM history h
                             INNER JOIN curriculums cu on cu.curriculum_id = h.curriculum_id
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
@@ -114,7 +114,7 @@ class Curriculums:
     def get_degree_top_rated(self, degree_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                            SELECT  cu.curriculum_id, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count FROM curriculums cu
+                            SELECT cu.curriculum_id AS curriculum_sequence, cu.name, cu.rating, concat(first_name,' ',last_name) AS user, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count FROM curriculums cu
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id

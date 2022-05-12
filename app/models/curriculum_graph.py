@@ -295,7 +295,7 @@ class CurruculumGraph:
                                     "semester_ids": [semesterId] }
 
                     res["year_list"]["year_ids"].sort()
-                    res[year]["semester_ids"] = sorted(res[year]["semester_ids"], key=lambda x: x.split('_')[-1][1])
+                    res[year]["semester_ids"] = sorted(res[year]["semester_ids"], key=lambda x: x.split('_')[-1])
                     res[semesterId] = get_courses(tx, semesterId, row[0].get("name"), year)
 
                 get_categories(tx, id, res)
@@ -376,7 +376,7 @@ class CurruculumGraph:
 
                 UNWIND co AS course
                     OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE {dept: $dept}]-(pre)
-                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE {dept: $dept}]-(coreq)
+                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})<-[:CO_REQUISITE {dept: $dept}]-(coreq)
                     WITH co, pre, coreq
     
                     RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.credits AS credits, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect( DISTINCT {classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect( DISTINCT {classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
@@ -384,7 +384,7 @@ class CurruculumGraph:
                 MATCH (curr2:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
                     OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE {dept: $dept}]-(pre)
-                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE {dept: $dept}]-(coreq)
+                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})<-[:CO_REQUISITE {dept: $dept}]-(coreq)
                     WITH cu, pre, coreq
                     
                     RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.credits AS credits, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect( DISTINCT {classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect( DISTINCT {classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
