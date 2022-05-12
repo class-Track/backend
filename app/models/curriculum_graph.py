@@ -294,6 +294,8 @@ class CurruculumGraph:
                                     "name": "Year {}".format(year),
                                     "semester_ids": [semesterId] }
 
+                    res["year_list"]["year_ids"].sort()
+                    res[year]["semester_ids"] = sorted(res[year]["semester_ids"], key=lambda x: x.split('_')[-1][1])
                     res[semesterId] = get_courses(tx, semesterId, row[0].get("name"), year)
 
             get_categories(tx, id, res)
