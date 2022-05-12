@@ -100,9 +100,12 @@ class Users:
 
     def readStudentProfile(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT email, first_name, last_name, degrees.name AS degree_name, d.name AS department_name, u.name AS university_name "
-                           "FROM students INNER JOIN users ON user_id = students.student_id NATURAL INNER JOIN degrees "
-                           "NATURAL INNER JOIN departments d INNER JOIN universities u ON d.university_id = u.university_id "
+            #natural inner joins do not seem to be working for some reason (?)
+            cursor.execute("SELECT email, first_name, last_name, dep.name AS department_name, deg.name AS degree_name, u.name AS university_name "
+                           "FROM students INNER JOIN users ON user_id = students.student_id "
+                           "INNER JOIN degrees deg ON students.degree_id = deg.degree_id "
+                           "INNER JOIN departments dep ON deg.department_id = dep.department_id "
+                           "INNER JOIN universities u ON dep.university_id = u.university_id "
                            "WHERE user_id=%(user_id)s",
                            {"user_id": id})
             self.connection.commit()
