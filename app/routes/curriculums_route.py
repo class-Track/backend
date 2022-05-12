@@ -41,7 +41,7 @@ def create_curriculum():
     cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
 
     curriculum_access = Curriculums()
-    curriculum['curriculum_sequence'] = curriculum_access.create(curriculum.get("name"), curriculum.get("deptCode"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids)).get("curriculum_id")
+    curriculum['curriculum_sequence'] = curriculum_access.create(curriculum.get("name"), curriculum.get("deptCode"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids), curriculum['isDraft']).get("curriculum_id")
 
     dao = CurruculumGraph(current_app.driver)
     createdCurr = dao.create_custom_curr(curriculum, categories, semesters, cat_per_course)
@@ -73,6 +73,15 @@ def get_curriculum(id):
 def get_curriculum_by_user(id):
     curriculum_access = Curriculums()
     curriculum = curriculum_access.get_curriculum_by_user(id)
+    if curriculum is None:
+        return make_response(jsonify({"err": "User has no curriculums"}), 404)
+    return make_response(jsonify(curriculum), 200)
+
+# READ BY USER_ID
+@app_curriculum_routes.route('/classTrack/curriculum/user_draft/<string:id>', methods=['GET'])
+def get_drafts_by_user(id):
+    curriculum_access = Curriculums()
+    curriculum = curriculum_access.get_drafts_by_user(id)
     if curriculum is None:
         return make_response(jsonify({"err": "User has no curriculums"}), 404)
     return make_response(jsonify(curriculum), 200)
@@ -159,7 +168,7 @@ def update_custom_curriculum():
     cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
 
     curriculum_access = Curriculums()
-    curriculum_access.update(curriculum['curriculum_sequence'], curriculum['name'],len(semesters_ids), len(course_ids))
+    curriculum_access.update(curriculum['curriculum_sequence'], curriculum['name'],len(semesters_ids), len(course_ids), curriculum['isDraft'])
 
     dao = CurruculumGraph(current_app.driver)
     id = dao.update_custom_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, cat_per_course)

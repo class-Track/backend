@@ -11,7 +11,7 @@ class Curriculums:
     def __init__(self):
         self.connection = dbconnection().connection()
 
-    def create(self, name, deptCode, user_id, degree_id, semesters, course_count):
+    def create(self, name, deptCode, user_id, degree_id, semesters, course_count, isDraft):
         curriculum = '{}_{}'.format(deptCode, user_id)
         
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -25,10 +25,10 @@ class Curriculums:
             curriculum_id = '{}_V{}'.format(curriculum, count+1)
 
             cursor.execute(
-                "INSERT INTO curriculums (name, curriculum_id, user_id, degree_id, rating, semesters, course_count)"
-                " VALUES ( %(name)s, %(curriculum_id)s, %(user_id)s, %(degree_id)s, 0, %(semesters)s, %(course_count)s)"
+                "INSERT INTO curriculums (name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft)"
+                " VALUES ( %(name)s, %(curriculum_id)s, %(user_id)s, %(degree_id)s, 0, %(semesters)s, %(course_count)s, %(isDraft)s)"
                 " RETURNING curriculum_id", {
-                    "name": name, "curriculum_id": curriculum_id, "user_id": user_id, "degree_id": degree_id, "rating": 0, "semesters":semesters, "course_count":course_count }
+                    "name": name, "curriculum_id": curriculum_id, "user_id": user_id, "degree_id": degree_id, "rating": 0, "semesters":semesters, "course_count":course_count, "isDraft":isDraft }
             )
             self.connection.commit()
             curriculum_id = cursor.fetchone()
@@ -37,14 +37,14 @@ class Curriculums:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count FROM curriculums")
+                "SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums")
             self.connection.commit()
             curriculums = cursor.fetchall()
             return curriculums
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
+            cursor.execute("SELECT name, curriculum_id, user_id, degree_id, rating, semesters, course_count, is_draft FROM curriculums WHERE curriculum_id=%(curriculum_id)s",
                            {"curriculum_id": id})
             self.connection.commit()
             try:
@@ -56,12 +56,30 @@ class Curriculums:
     def get_curriculum_by_user(self, user_id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                            SELECT  cu.curriculum_id, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count FROM curriculums cu
+                            SELECT  cu.curriculum_id, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id
-                            WHERE cu.user_id = %(user_id)s
-                            GROUP BY cu.curriculum_id, cu.name, de.credits, de.name, cu.rating, de.length, cu.semesters, cu.course_count""",
+                            WHERE cu.user_id = %(user_id)s and is_draft = false
+                            GROUP BY cu.curriculum_id, cu.name, de.credits, de.name, cu.rating, de.length, cu.semesters, cu.course_count, cu.is_draft""",
+                            {"user_id":user_id}
+            )
+            self.connection.commit()
+            try:
+                curriculums = cursor.fetchall()
+            except TypeError:
+                curriculums = None
+            return curriculums
+
+    def get_drafts_by_user(self, user_id):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                            SELECT  cu.curriculum_id, cu.name, cu.rating, de.name AS degree_name, de.length AS years, de.credits, cu.semesters, cu.course_count, cu.is_draft FROM curriculums cu
+                            INNER JOIN degrees de ON de.degree_id = cu.degree_id
+                            INNER JOIN departments d ON de.department_id = d.department_id
+                            INNER JOIN users u ON u.user_id = cu.user_id
+                            WHERE cu.user_id = %(user_id)s and is_draft = true
+                            GROUP BY cu.curriculum_id, cu.name, de.credits, de.name, cu.rating, de.length, cu.semesters, cu.course_count, cu.is_draft""",
                             {"user_id":user_id}
             )
             self.connection.commit()
@@ -79,7 +97,7 @@ class Curriculums:
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id
-                            WHERE de.degree_id = %(degree_id)s
+                            WHERE de.degree_id = %(degree_id)s and cu.is_draft = false
                             GROUP BY h.curriculum_id, cu.name, de.credits, u.first_name, u.last_name, de.name, cu.rating, de.length, cu.semesters, cu.course_count
                             ORDER BY times_visited DESC
                             LIMIT 9;
@@ -100,7 +118,7 @@ class Curriculums:
                             INNER JOIN degrees de ON de.degree_id = cu.degree_id
                             INNER JOIN departments d ON de.department_id = d.department_id
                             INNER JOIN users u ON u.user_id = cu.user_id
-                            WHERE de.degree_id = %(degree_id)s
+                            WHERE de.degree_id = %(degree_id)s and cu.is_draft = false
                             GROUP BY cu.curriculum_id, cu.name, de.credits, u.first_name, u.last_name, de.name, cu.rating, de.length, cu.semesters, cu.course_count
                             ORDER BY rating DESC
                             LIMIT 9;
@@ -134,13 +152,13 @@ class Curriculums:
             self.connection.commit()
             return id
 
-    def update(self, id, name, semesters, course_count):
+    def update(self, id, name, semesters, course_count, isDraft):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
                 "UPDATE curriculums"
-                " SET name=%(name)s, semesters=%(semesters)s, course_count=%(course_count)s"
+                " SET name=%(name)s, semesters=%(semesters)s, course_count=%(course_count)s, is_draft=%(isDraft)s"
                 " WHERE curriculum_id=%(curriculum_id)s ",
-                {"curriculum_id": id, "name": name, "semesters":semesters, "course_count":course_count})
+                {"curriculum_id": id, "name": name, "semesters":semesters, "course_count":course_count, "isDraft":isDraft})
             self.connection.commit()
             return id
 
