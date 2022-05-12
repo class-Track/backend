@@ -9,9 +9,9 @@ class CurruculumGraph:
     """
     Create a new standard curriculum 
     """
-    def create_standard_curr(self, curr, categories, semesters, prereqs, coreqs, cat_per_course):
+    def create_standard_curr(self, curr, dept, categories, semesters, prereqs, coreqs, cat_per_course):
         # Save curriculum in database
-        def create_curriculum(tx, curr, categories, semesters, prereqs, coreqs, cat_per_course):
+        def create_curriculum(tx, curr, dept,  categories, semesters, prereqs, coreqs, cat_per_course):
             return tx.run("""
                 MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name })
                 
@@ -62,7 +62,7 @@ class CurruculumGraph:
                 UNWIND $coreqs AS coreq 
                 MATCH (c1:Course) WHERE c1.id = coreq.id
                 MATCH (c2:Course) WHERE c2.id = coreq.co_id
-                MERGE (c2)-[:CO_REQUISITE]->(c1)
+                MERGE (c2)-[:CO_REQUISITE {dept: $dept}]->(c1)
 
                 WITH c
             """ if coreqs else " ")
@@ -72,24 +72,21 @@ class CurruculumGraph:
                 UNWIND $prereqs AS prereq 
                 MATCH (c1:Course) WHERE c1.id = prereq.id
                 MATCH (c2:Course) WHERE c2.id = prereq.pre_id
-                MERGE (c2)-[:PRE_REQUISITE]->(c1)
+                MERGE (c2)-[:PRE_REQUISITE {dept: $dept}]->(c1)
 
                 WITH c
             """ if prereqs else " ")
             +
             ("""
-
                 UNWIND $cat_per_course AS cpc
-                MERGE (c3:Course {course_id: cpc.id})
-                ON MATCH
-                    SET c3.category = cpc.category
+                MATCH (c3:Course {course_id: cpc.id}) SET c3.category = cpc.category
 
                 RETURN DISTINCT c.curriculum_sequence
             """ if cat_per_course else "DISTINCT RETURN c.curriculum_sequence")
-        , curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course).single()
+        , curr=curr, dept=dept, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course).single()
 
         with self.driver.session() as session:
-            record = session.write_transaction(create_curriculum, curr=curr, categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course)
+            record = session.write_transaction(create_curriculum, curr=curr, dept=dept,  categories=categories, semesters=semesters, prereqs=prereqs, coreqs=coreqs, cat_per_course=cat_per_course)
             return { "id": record[0] }
 
     """
@@ -161,39 +158,39 @@ class CurruculumGraph:
     """"
     Get courses Pre Requisistes
     """
-    def get_pre_reqs(self, id):
+    def get_pre_reqs(self, id, dept):
         # Get pre requisites
-        def get_pre_reqs(tx, id):
+        def get_pre_reqs(tx, id, dept):
             if id == None:
                 return []
             result = list(tx.run("""
-                MATCH (c:Course {course_id: $course_id})<-[:PRE_REQUISITE]-(p)
+                MATCH (c:Course {course_id: $course_id})<-[:PRE_REQUISITE {dept: $dept}]-(p)
                 RETURN p.course_id AS id, p.classification AS code, p.name AS name
-            """, course_id=int(id)))
+            """, course_id=int(id), dept=dept))
 
             return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
 
         with self.driver.session() as session:
-            records = session.write_transaction(get_pre_reqs, id=id)
+            records = session.write_transaction(get_pre_reqs, id=id, dept=dept)
             return records
         
     """"
     Get courses Co Requisistes
     """
-    def get_co_reqs(self, id):
+    def get_co_reqs(self, id, dept):
         # Get pre requisites
-        def get_co_reqs(tx, id):
+        def get_co_reqs(tx, id, dept):
             if id == None:
                 return []
             result = list(tx.run("""
-                MATCH (c:Course {course_id: $course_id})-[:CO_REQUISITE]-(p)
+                MATCH (c:Course {course_id: $course_id})-[:CO_REQUISITE {dept: $dept}]-(p)
                 RETURN p.course_id AS id, p.classification AS code, p.name AS name
-            """, course_id=int(id)))
+            """, course_id=int(id), dept=dept))
 
             return [ {"id": r.get("id"), "code": r.get("code"), "name": r.get("name")} for r in result ]
 
         with self.driver.session() as session:
-            records = session.write_transaction(get_co_reqs, id=id)
+            records = session.write_transaction(get_co_reqs, id=id, dept=dept)
             return records
 
     """"
@@ -262,6 +259,8 @@ class CurruculumGraph:
                                       "name": "Year List",
                                       "year_ids": []
                                     }}
+
+                dept = curr.get("deptCode")
             
                 for row in result:
                     year = str(row[0].get("year"))
@@ -277,7 +276,7 @@ class CurruculumGraph:
                     res[semesterId] = get_courses(tx, semesterId, row[0].get("name"), year)
 
             get_categories(tx, id, res)
-            get_all_course_info(tx, id, res)
+            get_all_course_info(tx, id, res, dept)
                         
             return res
 
@@ -330,7 +329,7 @@ class CurruculumGraph:
                     get_cat_courses(tx, id, res)
                         
             return res
-
+            
         def get_cat_courses(tx, id, res):
             result = list(tx.run("""
                 MATCH (cat:Category { id:$id})<-[:FROM_CATEGORY]-(c:Course)
@@ -348,26 +347,25 @@ class CurruculumGraph:
                         "department_id": row.get("department_id"),
                     })
 
-        
-        def get_all_course_info(tx, curr_id, res):
+        def get_all_course_info(tx, curr_id, res, dept):
             result = list(tx.run("""
                 MATCH (curr1:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(sem: Semester)<-[:FROM_SEMESTER]-(co: Course)
 
                 UNWIND co AS course
-                    OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE]-(pre)
-                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
+                    OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE {dept: $dept}]-(pre)
+                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE {dept: $dept}]-(coreq)
                     WITH co, pre, coreq
     
-                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.credits AS credits, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
+                    RETURN co.id AS id, co.course_id AS course_id, co.name AS name, co.category AS category, co.classification AS classification, co.credits AS credits, co.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect( DISTINCT {classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect( DISTINCT {classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
                 UNION
                 MATCH (curr2:Curriculum { curriculum_sequence: $id})<-[:FROM_CURRICULUM]-(cat: Category)<-[:FROM_CATEGORY]-(cu: Course)
                 UNWIND cu AS course
-                    OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE]-(pre)
-                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE]-(coreq)
+                    OPTIONAL MATCH (c1:Course {course_id: course.course_id})<-[:PRE_REQUISITE {dept: $dept}]-(pre)
+                    OPTIONAL MATCH (c2:Course {course_id: course.course_id})-[:CO_REQUISITE {dept: $dept}]-(coreq)
                     WITH cu, pre, coreq
                     
-                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.credits AS credits, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect({classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect({classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
-            """, id=curr_id))
+                    RETURN cu.id AS id, cu.course_id AS course_id, cu.name AS name, cu.category AS category, cu.classification AS classification, cu.credits AS credits, cu.department_id AS department_id, (CASE WHEN pre IS NOT NULL THEN collect( DISTINCT {classification: pre.classification, credits:pre.credits, course_id:pre.course_id, department_id: pre.department_id, name: pre.name, id: pre.id}) ELSE [] END) AS prereqs, (CASE WHEN coreq IS NOT NULL THEN collect( DISTINCT {classification: coreq.classification, credits: coreq.credits, course_id:coreq.course_id, department_id: coreq.department_id, name: coreq.name, id: coreq.id}) ELSE [] END) AS coreqs
+            """, id=curr_id, dept=dept))
             if result:
                 res['course_list'] = {
                     "id": "course_list",

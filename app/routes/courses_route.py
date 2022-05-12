@@ -107,9 +107,10 @@ def __get_department__(id):  # TODO: Eventually remove this
 @app_course_routes.route('/course/prereqs', methods=['GET'])
 def get_pre_reqs():
     id = request.args.get("id")
+    dept = request.args.get("deptCode")
 
     dao = CurruculumGraph(current_app.driver)
-    curr = dao.get_pre_reqs(id)
+    curr = dao.get_pre_reqs(id, dept)
 
     if not curr:
          return make_response(jsonify({"err": "Course doesn't exist"}), 404)
@@ -119,9 +120,10 @@ def get_pre_reqs():
 @app_course_routes.route('/course/coreqs', methods=['GET'])
 def get_co_reqs():
     id = request.args.get("id")
+    dept = request.args.get("deptCode")
 
     dao = CurruculumGraph(current_app.driver)
-    curr = dao.get_co_reqs(id)
+    curr = dao.get_co_reqs(id, dept)
 
     if not curr:
          return make_response(jsonify({"err": "Course doesn't exist"}), 404)

@@ -48,7 +48,7 @@ def create_standard_curriculum():
         for co in c["coreqs"]:
             coreqs.append({"id": c["id"], "co_id": co["id"]})
 
-    createdCurr = dao.create_standard_curr(curriculum, categories, semesters, prereqs, coreqs, cat_per_course)
+    createdCurr = dao.create_standard_curr(curriculum, curriculum['deptCode'], categories, semesters, prereqs, coreqs, cat_per_course)
 
     
     return make_response(jsonify(createdCurr), 200)

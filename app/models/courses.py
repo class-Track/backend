@@ -23,7 +23,7 @@ class Courses:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT course_id, department_id, name, classification, credits FROM courses")
+                "SELECT course_id, department_id, name, classification, credits FROM courses order by classification")
             self.connection.commit()
             courses = cursor.fetchall()
             return courses
