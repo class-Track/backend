@@ -196,9 +196,9 @@ class CurruculumGraph:
     """"
     Delete curriculum node and relationships
     """
-    def delete_curriculum(self, id):
-        # Delete curriculum
-        def delete_curriculum(tx, id):
+    def delete_curriculum(self, id, deptCode):
+        # Delete Custom curriculum
+        def delete_custom_curriculum(tx, id):
             if id == None:
                 return None
             result = (tx.run("""
@@ -210,8 +210,29 @@ class CurruculumGraph:
 
             return result.get('id')
 
+        def delete_standard_curriculum(tx, id, dept):
+            if id == None:
+                return None
+            result = (tx.run("""
+                MATCH (c:Curriculum {curriculum_sequence: $curr_id})<-[:FROM_CURRICULUM | :FROM_CATEGORY]-(sem)
+                WITH c, sem, c.curriculum_sequence AS id
+                DETACH DELETE sem, c
+                WITH id
+                MATCH (c:Course)-[pre:PRE_REQUISITE {dept:$dept}]-(:Course)
+                DELETE pre
+                WITH id
+                MATCH (c:Course)-[co:CO_REQUISITE {dept:$dept}]-(:Course)
+                DELETE co
+                RETURN DISTINCT id
+            """, curr_id=id, dept=dept)).single()
+
+            return result.get('id')
+
         with self.driver.session() as session:
-            records = session.write_transaction(delete_curriculum, id=id)
+            if deptCode:
+                records = session.write_transaction(delete_standard_curriculum, id=id, dept=deptCode) 
+            else :
+                records = session.write_transaction(delete_custom_curriculum, id=id)
             return records
 
     """"

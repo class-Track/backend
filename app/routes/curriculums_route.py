@@ -170,26 +170,26 @@ def update_custom_curriculum():
 @app_curriculum_routes.route('/classTrack/curriculum/delete/<string:id>', methods=['POST'])
 def delete_curriculum(id):
     data = request.get_json()
-    s, _ = SManager.get_tied_user(data["session_id"])
+    s, admin = SManager.get_tied_user(data["session_id"])
     if s is None:
         return make_response(jsonify({"err": "Invalid Session"}), 401)
 
-    curriculum_access = Curriculums()
+    if not admin:
+        curriculum_access = Curriculums()
+        c = curriculum_access.read(id)
+        if c is None:
+            return make_response(jsonify({"err": "Curriculum was not found"}), 404)
 
-    c = curriculum_access.read(id)
-    if c is None:
-        return make_response(jsonify({"err": "Curriculum was not found"}), 404)
-
-    if c['user_id'] != s['user_id']:
-        return make_response(jsonify({"err": "Session does not own curriculum"}), 403)
-
-    deleted_curriculum = curriculum_access.delete(id)
+        if c['user_id'] != s['user_id']:
+            return make_response(jsonify({"err": "Session does not own curriculum"}), 403)
+        curriculum_access.delete(id)
+    
+    deptCode = data['deptCode'] if data.get('deptCode') else None
 
     dao = CurruculumGraph(current_app.driver)
-    wasDeleted = dao.delete_curriculum(id)
-    print(wasDeleted)
+    wasDeleted = dao.delete_curriculum(id, deptCode)
 
     if(not wasDeleted):
         return make_response(jsonify({"err": "Curriculum was not deleted from graph db"}), 403)
 
-    return make_response(jsonify({"curriculum_id": deleted_curriculum}), 200)
+    return make_response(jsonify({"curriculum_id": wasDeleted}), 200)
