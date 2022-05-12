@@ -239,7 +239,7 @@ class CurruculumGraph:
     Update a Custom curriculum
     """
     def update_custom_curriculum(self, curriculum_sequence, curr, categories, semesters, cat_per_course):
-        self.delete_curriculum(curriculum_sequence)
+        self.delete_curriculum(curriculum_sequence, None)
         id = self.create_custom_curr(curr, categories, semesters, cat_per_course)
         return id
 
@@ -247,7 +247,7 @@ class CurruculumGraph:
     Update a Standard curriculum
     """
     def update_standard_curriculum(self, curriculum_sequence, curr, categories, semesters, coreqs, prereqs, cat_per_course):
-        self.delete_curriculum(curriculum_sequence)
+        self.delete_curriculum(curriculum_sequence, curr['deptCode'])
         id = self.create_standard_curr(curr, categories, semesters, coreqs, prereqs, cat_per_course)
         return id
    

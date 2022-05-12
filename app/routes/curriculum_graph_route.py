@@ -112,3 +112,4 @@ def get_curriculum():
          return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
 
     return make_response(jsonify(curr), 200)
+    
