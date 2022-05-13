@@ -148,8 +148,8 @@ def rename_curriculum(id):
         id, data["name"])
     return make_response(jsonify({"curriculum_id": updated_curriculum}), 200)
 
-# UPDATE 
-@app_curriculum_routes.route('/classTrack/curriculum/update_custom', methods=['PUT'])
+# UPDATE
+@app_curriculum_routes.route('/classTrack/curriculum/update_custom', methods=['POST'])
 def update_custom_curriculum():
     data = request.get_json()
     s, _ = SManager.get_tied_user(data["session_id"])

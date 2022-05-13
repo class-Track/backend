@@ -53,7 +53,7 @@ def create_standard_curriculum():
     
     return make_response(jsonify(createdCurr), 200)
 
-@app_curr_graph_routes.route('/update/standard_curriculum', methods=['PUT'])
+@app_curr_graph_routes.route('/update/standard_curriculum', methods=['POST'])
 def update_standard_curriculum():
     data = request.get_json()
     dao = CurruculumGraph(current_app.driver)
@@ -112,4 +112,3 @@ def get_curriculum():
          return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
 
     return make_response(jsonify(curr), 200)
-    
