@@ -23,14 +23,14 @@ class Departments:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT university_id, name, classification FROM departments")
+                "SELECT department_id, university_id, name, classification FROM departments")
             self.connection.commit()
             departments = cursor.fetchall()
             return departments
 
     def read(self, id):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT university_id, name, classification FROM departments WHERE department_id=%(department_id)s",
+            cursor.execute("SELECT department_id, university_id, name, classification FROM departments WHERE department_id=%(department_id)s",
                            {"department_id": id})
             self.connection.commit()
             try:

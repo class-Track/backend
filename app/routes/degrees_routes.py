@@ -28,7 +28,7 @@ def create_degree():
 
     degree_access = Degrees()
     degree_id = degree_access.create(
-       data["name"], data["department_id"], data["curriculum_sequence"], data["length"], data["credits"])
+       data["name"], data["department_id"], data["length"], data["credits"])
     return make_response(jsonify(degree_id), 200)
 
 # READ ALL
