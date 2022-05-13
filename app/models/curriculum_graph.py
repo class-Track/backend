@@ -13,7 +13,7 @@ class CurruculumGraph:
         # Save curriculum in database
         def create_curriculum(tx, curr, sequence, dept,  categories, semesters, prereqs, coreqs, cat_per_course):
             return tx.run("""
-                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name })
+                MERGE (c:Curriculum { curriculum_sequence: $curr.curriculum_sequence, name: $curr.name, deptCode: $curr.deptCode, user_id: $curr.user_id, length: $curr.length, credits: $curr.credits, degree_id:$curr.degree_id, degree_name:$curr.degree_name, department_id: $curr.department_id, department_name:$curr.department_name, isDraft:false })
                 
                 WITH c
                 
@@ -278,6 +278,7 @@ class CurruculumGraph:
                     "department_name": curr.get("department_name"),
                     "deptCode": curr.get("deptCode"),
                     "length": curr.get("length"),
+                    "isDraft": curr.get("isDraft") if curr.get("isDraft") else False,
                     "year_list": { "id": "year_list",
                                       "name": "Year List",
                                       "year_ids": []
