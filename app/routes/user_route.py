@@ -50,6 +50,23 @@ def get_me():
     s["isAdmin"] = admin
     return make_response(jsonify(s), 200)
 
+# Get student's profile data
+@app_users_routes.route('/classTrack/profile', methods=['POST'])
+def get_profile():
+    data = request.get_json()
+    s = SManager.find_session(data["session_id"])
+
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+
+    user_access = Users()
+    profile = user_access.readProfile(s.user_id())
+
+    if profile is None:
+        return make_response(jsonify({"err": "This account must be broken"}), 404)
+
+    return make_response(jsonify(profile), 200)
+
 # READ ALL
 @app_users_routes.route('/classTrack/users', methods=['GET'])
 def get_all_users():

@@ -69,7 +69,7 @@ class Users:
     def read_all(self):
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                "SELECT first_name, last_name, email FROM users")
+                "SELECT user_id, first_name, last_name, email FROM users")
             self.connection.commit()
             users = cursor.fetchall()
             return users
@@ -90,6 +90,27 @@ class Users:
         with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("SELECT user_id, degree_id, first_name, last_name, email FROM users " 
                            "INNER JOIN students st ON(st.student_id = user_id) WHERE user_id=%(user_id)s",
+                           {"user_id": id})
+            self.connection.commit()
+            try:
+                user = cursor.fetchone()
+            except TypeError:
+                user = None
+            return user
+
+    def readProfile(self, id):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            #natural inner joins do not seem to be working for some reason (?)
+            cursor.execute( "SELECT user_id, email, first_name, last_name, deg.name AS degree_name, u.name AS university_name "
+                            "FROM students INNER JOIN users ON user_id = students.student_id "
+                            "INNER JOIN degrees deg ON students.degree_id = deg.degree_id "
+                            "INNER JOIN departments dep ON deg.department_id = dep.department_id "
+                            "INNER JOIN universities u ON dep.university_id = u.university_id "
+                            "where user_id=%(user_id)s "
+                                "union( SELECT user_id, email, first_name, last_name, '' AS degree_name, u.name AS university_name "
+                                    "FROM admins INNER JOIN users ON user_id = admins.admin_id "
+                                    "INNER JOIN universities u ON admins.university_id = u.university_id "
+                                    "where user_id=%(user_id)s)",
                            {"user_id": id})
             self.connection.commit()
             try:

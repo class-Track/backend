@@ -3,41 +3,113 @@ from flask.json import jsonify
 from app.models.curriculum_graph import CurruculumGraph
 from app.models.session_manager import SessionManager
 
-app_curr_graph_routes = Blueprint('curr_graph_routes', __name__, url_prefix="/classTrack/currGraph")
+app_curr_graph_routes = Blueprint('curr_graph_routes', __name__, url_prefix="/classTrack")
+SManager = SessionManager()
 
-@app_curr_graph_routes.route('/admin', methods=['POST'])
+@app_curr_graph_routes.route('/standard_curriculum', methods=['POST'])
 def create_standard_curriculum():
     data = request.get_json()
-
-    graph = data['graph']
-    co_reqs = data['co_reqs']
-    pre_reqs = data['pre_reqs']
-
     dao = CurruculumGraph(current_app.driver)
+    s, admin = SManager.get_tied_user(data["session_id"])
 
-    curr = dao.create_standard_curr(graph, co_reqs, pre_reqs)
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    return jsonify(curr)
+    curriculum = {    
+        "curriculum_sequence": data.pop('curriculum_sequence'),
+        "name":  data.pop('name'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
+        "length":  data.pop('length'),
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name')
+    }
+    years = data.pop('year_list')['year_ids']
 
-@app_curr_graph_routes.route('/student', methods=['POST'])
-def create_custom_curriculum():
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
+    categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
+
+    semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
+    semesters = [data[sem] for sem in semesters_ids]
+
+    course_ids = data.pop('course_list')['course_ids']
+    reqs = [data[co] for co in course_ids if (data[co]["prereqs"] or data[co]["coreqs"])]
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
+    prereqs, coreqs = [],[]
+
+    for c in reqs:
+        for pre in c["prereqs"]:
+            prereqs.append({"id": c["id"], "pre_id": pre["id"]})
+        for co in c["coreqs"]:
+            coreqs.append({"id": c["id"], "co_id": co["id"]})
+
+    createdCurr = dao.create_standard_curr(curriculum, curriculum['deptCode'], categories, semesters, prereqs, coreqs, cat_per_course)
+
+    
+    return make_response(jsonify(createdCurr), 200)
+
+@app_curr_graph_routes.route('/update/standard_curriculum', methods=['PUT'])
+def update_standard_curriculum():
     data = request.get_json()
-
-    graph = data['graph']
-
     dao = CurruculumGraph(current_app.driver)
+    s, admin = SManager.get_tied_user(data["session_id"])
 
-    curr = dao.create_custom_curr(graph)
+    if s is None:
+        return make_response(jsonify({"err": "Invalid Session"}), 401)
+    if not admin:
+        return make_response(jsonify({"err": "User is not an admin. They are a student"}), 403)
 
-    return jsonify(curr)
+    curriculum = {    
+        "curriculum_sequence": data.pop('curriculum_sequence'),
+        "name":  data.pop('name'),
+        "deptCode":  data.pop("deptCode"),
+        "user_id": data.pop('user_id'),
+        "length":  data.pop('length'),
+        "credits":  data.pop('credits'),
+        "degree_id": data.pop('degree_id'),
+        "degree_name": data.pop('degree_name'),
+        "department_id": data.pop('department_id'),
+        "department_name": data.pop('department_name')
+    }
+    years = data.pop('year_list')['year_ids']
 
+    categories_ids = data.pop('category_list')['category_ids'] if ('category_list' in data and 'category_ids' in data['category_list']) else None
+    categories = [data[cat] for cat in categories_ids if cat in data] if categories_ids else None
 
-@app_curr_graph_routes.route('/curr', methods=['GET'])
+    semesters_ids = [ s for y in years for s in data[y]['semester_ids']]
+    semesters = [data[sem] for sem in semesters_ids]
+
+    course_ids = data.pop('course_list')['course_ids']
+    reqs = [data[co] for co in course_ids if (data[co]["prereqs"] or data[co]["coreqs"])]
+    cat_per_course =  [{"id": data[c]['course_id'], "category": data[c]['category']} for c in course_ids]
+    prereqs, coreqs = [],[]
+
+    for c in reqs:
+        for pre in c["prereqs"]:
+            prereqs.append({"id": c["id"], "pre_id": pre["id"]})
+        for co in c["coreqs"]:
+            coreqs.append({"id": c["id"], "co_id": co["id"]})
+
+    updatedCurr = dao.update_custom_curriculum(curriculum['curriculum_sequence'], curriculum, categories, semesters, prereqs, coreqs, cat_per_course)
+    if not updatedCurr:
+        make_response(jsonify({"err": "Curriculum was not found"}), 404)
+    return make_response(jsonify(updatedCurr), 200)
+
+@app_curr_graph_routes.route('/currGraph', methods=['GET'])
 def get_curriculum():
-    currName = request.args.get("name")
+    id = request.args.get("id")
 
     dao = CurruculumGraph(current_app.driver)
 
-    curr = dao.get_curriculum(currName)
+    curr = dao.get_curriculum(id)
 
-    return jsonify(curr)
+    if not curr:
+         return make_response(jsonify({"err": "Curriculum doesn't exist"}), 404)
+
+    return make_response(jsonify(curr), 200)
+    
