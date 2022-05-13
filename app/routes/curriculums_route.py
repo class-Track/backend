@@ -45,7 +45,7 @@ def create_curriculum():
     curriculum_access.create(curriculum.get("name"), curriculum.get("curriculum_sequence"), curriculum.get("user_id"), curriculum.get("degree_id"), len(semesters_ids), len(course_ids), curriculum['isDraft'])
 
     dao = CurruculumGraph(current_app.driver)
-    createdCurr = dao.create_custom_curr(curriculum, categories, semesters, cat_per_course)
+    createdCurr = dao.create_custom_curr(curriculum.get("curriculum_sequence"), curriculum, categories, semesters, cat_per_course)
 
     if(createdCurr is None):
         curriculum_access.delete(curriculum['curriculum_sequence'])
